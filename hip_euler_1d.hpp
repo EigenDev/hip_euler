@@ -10,16 +10,17 @@
  * Check if the compiler define _CUDACC__
  * If not, use standard CPU calls
 */
+#include "hip/hip_runtime.h"
+#include "gpu_error_check.h"
 
-#ifdef __CUDACC__
+#ifdef __HIPACC__
 #define GPU_CALLABLE_MEMBER __host__ __device__
 #else
 #define GPU_CALLABLE_MEMBER 
 #endif 
 
 
-#include "hip/hip_runtime.h"
-#include "gpu_error_check.h"
+
 
 // Static const values 
 constexpr double PI = 3.14159265358979323846;

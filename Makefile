@@ -9,7 +9,7 @@
 # clean:
 # 	rm -f *.o app
 
-HIP_PATH ?= $(wildcard /opt/rocm-4.2.0/hip)
+HIP_PATH ?= $(wildcard /opt/rocm/hip)
 HIP_PLATFORM = $(shell $(HIP_PATH)/bin/hipconfig --platform)
 HIP_INCLUDE  = -I$(HIP_PATH)/include
 BUILD_DIR ?= build 
