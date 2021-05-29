@@ -23,6 +23,8 @@ endif
 CXX=${HIPCC}
 CXXFLAGS = -I.
 LDFLAGS = -lhdf5 -lhdf5_cpp
+LD_LIBRARY_PATH=
+LIBS=$(LD_LIBRARY_PATH) $(LDFLAGS)
 
 SOURCES=$(wildcard *.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
@@ -33,13 +35,13 @@ EXECUTABLE=./gpuEuler
 all: $(EXECUTABLE) test
 
 $(EXECUTABLE): $(OBJECTS)
-		$(CXX) $(CXXFLAGS) $(LDFLAGS) $(OBJECTS) -o $@
+		$(CXX) $(CXXFLAGS) $(LIBS) $(OBJECTS) -o $@
 
 test: $(EXECUTABLE)
 		$(EXECUTABLE)
 
-%.o: %.cpp
-		$(CXX) $(CXXFLAGS) $(LDFLAGS) -dc $< -o $@	
+# %.o: %.cpp
+# 		$(CXX) $(CXXFLAGS) $(LDFLAGS) -dc $< -o $@	
 clean:
 	rm -f $(EXECUTABLE) 
 	rm -f $(OBJECTS) 
