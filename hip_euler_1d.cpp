@@ -225,6 +225,7 @@ void hip_euler::evolve(SimState *s, int nBlocks, int block_size, int nzones, dou
     double t = 0.0;
     high_resolution_clock::time_point t1, t2;
     std::chrono::duration<double> delta_t;
+    double zu_avg = 0;
     int n = 1;
     while (t < tend)
     {
@@ -234,6 +235,7 @@ void hip_euler::evolve(SimState *s, int nBlocks, int block_size, int nzones, dou
 
         t2 = high_resolution_clock::now();
         delta_t = t2 - t1;
+        zu_avg += nzones / delta_t.count();
         std::cout << std::fixed << std::setprecision(3) << std::scientific;
             std::cout << "\r"
                 << "Iteration: " << std::setw(5) << n 
@@ -246,6 +248,7 @@ void hip_euler::evolve(SimState *s, int nBlocks, int block_size, int nzones, dou
         n++;
     }
     std::cout << "\n";
+    std::cout << "Average zone_updates/sec for: " << n << " iterations was " << zu_avg / n << " zones/sec" << "\n";
 
 }
 
@@ -333,7 +336,7 @@ void SimDualSpace::cleanUp()
     hipFree(host_u1);
     hipFree(host_dudt);
     hipFree(host_prims);
-    printf("Memory Freed.");
+    printf("Memory Freed.\n");
     
 }
 
