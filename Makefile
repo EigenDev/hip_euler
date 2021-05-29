@@ -23,8 +23,13 @@ endif
 CXX=${HIPCC}
 CXXFLAGS = -I.
 LDFLAGS = -lhdf5 -lhdf5_cpp
-LD_LIBRARY_PATH=
-LIBS=$(LD_LIBRARY_PATH) $(LDFLAGS)
+LD_LIBRARY_PATH := 
+LIBS=-L$(LD_LIBRARY_PATH) $(LDFLAGS)
+
+ifeq (, ${LD_LIBRARY_PATH})
+	LIBS=$(LDFLAGS)
+endif
+
 
 SOURCES=$(wildcard *.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
