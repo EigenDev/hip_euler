@@ -16,7 +16,7 @@
 #ifdef __HIPCC__
 #define GPU_CALLABLE_MEMBER __host__ __device__
 #else
-#define GPU_CALLABLE_MEMBER __host__ __device__
+#define GPU_CALLABLE_MEMBER 
 #endif 
 
 

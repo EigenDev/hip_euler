@@ -23,7 +23,7 @@ int main(int argc, char ** argv)
     double xmin = 0.0;
     double xmax = 1.0;
     double dx   = (xmax - xmin)/nzones;
-
+    
     hip_euler::SimState sim_state;
     // create class storage on device and copy top level class
     hip_euler::SimState *d_sim;
