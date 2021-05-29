@@ -50,8 +50,8 @@ void SimState::initializeModel(
 
     // Allocate array of conservatives
     sys_state = (Conserved*) malloc(numzones * sizeof(Conserved));
-    u1        = (Conserved*) malloc(numzones * sizeof(Conserved));
-    du_dt     = (Conserved*) malloc(numzones * sizeof(Conserved));
+    // u1        = (Conserved*) malloc(numzones * sizeof(Conserved));
+    // du_dt     = (Conserved*) malloc(numzones * sizeof(Conserved));
     prims     = (Primitive*) malloc(numzones * sizeof(Primitive));
 
 
@@ -265,15 +265,15 @@ void SimDualSpace::copyStateToGPU(
 
     //--------Allocate the memory for pointer objects-------------------------
     hipMalloc((void **)&host_u0,     nz * sizeof(Conserved));
-    hipMalloc((void **)&host_u1,     nz * sizeof(Conserved));
-    hipMalloc((void **)&host_dudt,   nz * sizeof(Conserved));
+    // hipMalloc((void **)&host_u1,     nz * sizeof(Conserved));
+    // hipMalloc((void **)&host_dudt,   nz * sizeof(Conserved));
     hipMalloc((void **)&host_prims,  nz * sizeof(Primitive));
     // hipMalloc((void **)&u0        , sizeof(Conserved));
 
     //--------Copy the host resources to pointer variables on host
     hipMemcpy(host_u0,    host.sys_state, nz * sizeof(Conserved), hipMemcpyHostToDevice);
-    hipMemcpy(host_u1,    host.u1       , nz * sizeof(Conserved), hipMemcpyHostToDevice);
-    hipMemcpy(host_dudt,  host.du_dt    , nz * sizeof(Conserved), hipMemcpyHostToDevice);
+    // hipMemcpy(host_u1,    host.u1       , nz * sizeof(Conserved), hipMemcpyHostToDevice);
+    // hipMemcpy(host_dudt,  host.du_dt    , nz * sizeof(Conserved), hipMemcpyHostToDevice);
     hipMemcpy(host_prims, host.prims    , nz * sizeof(Primitive), hipMemcpyHostToDevice);
 
     // copy pointer to allocated device storage to device class
@@ -281,15 +281,15 @@ void SimDualSpace::copyStateToGPU(
     {
         printf("Hip Memcpy failed at: host_u0 -> device_sys_tate");
     };
-    if( hipMemcpy(&(device->u1),        &host_u1,    sizeof(Conserved *),  hipMemcpyHostToDevice) != hipSuccess )
-    {
-        printf("Hip Memcpy failed at: host_u1 -> device_u1");
-    };
+    // if( hipMemcpy(&(device->u1),        &host_u1,    sizeof(Conserved *),  hipMemcpyHostToDevice) != hipSuccess )
+    // {
+    //     printf("Hip Memcpy failed at: host_u1 -> device_u1");
+    // };
 
-    if( hipMemcpy(&(device->du_dt),     &host_dudt,  sizeof(Conserved *),  hipMemcpyHostToDevice) != hipSuccess )
-    {
-        printf("Hip Memcpy failed at: host_dudt -> device_du_dt");
-    };
+    // if( hipMemcpy(&(device->du_dt),     &host_dudt,  sizeof(Conserved *),  hipMemcpyHostToDevice) != hipSuccess )
+    // {
+    //     printf("Hip Memcpy failed at: host_dudt -> device_du_dt");
+    // };
 
     if( hipMemcpy(&(device->prims),     &host_prims, sizeof(Primitive *),  hipMemcpyHostToDevice) != hipSuccess )
     {
