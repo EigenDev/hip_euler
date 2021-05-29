@@ -68,7 +68,12 @@ void SimState::initializeModel(
     prims2cons(prims);
 }
 
-SimState::~SimState() = default;
+SimState::~SimState(){
+    free(sys_state);
+    free(u1);
+    free(du_dt);
+    free(prims);
+};
 
 // Convert from the conservarive array to primitive and cache it
 GPU_CALLABLE_MEMBER void SimState::cons2prim(const Conserved *u)
