@@ -19,7 +19,6 @@ static constexpr int BLOCK_SIZE = 32;
 
 int main(int argc, char ** argv)
 {
-    
     const int nzones = 1 << 16;
     double xmin = 0.0;
     double xmax = 1.0;

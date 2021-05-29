@@ -13,10 +13,10 @@
 #include "hip/hip_runtime.h"
 #include "gpu_error_check.h"
 
-#ifdef __HIPACC__
+#ifdef __HIPCC__
 #define GPU_CALLABLE_MEMBER __host__ __device__
 #else
-#define GPU_CALLABLE_MEMBER 
+#define GPU_CALLABLE_MEMBER __host__ __device__
 #endif 
 
 
