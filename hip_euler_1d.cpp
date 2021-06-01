@@ -70,8 +70,8 @@ void SimState::initializeModel(
 
 SimState::~SimState(){
     free(sys_state);
-    free(u1);
-    free(du_dt);
+    // free(u1);
+    // free(du_dt);
     free(prims);
 };
 
@@ -227,28 +227,36 @@ void hip_euler::evolve(SimState *s, int nBlocks, int block_size, int nzones, dou
     std::chrono::duration<double> delta_t;
     double zu_avg = 0;
     int n = 1;
+    int nfold = 1000;
+    int ncheck = 0;
     while (t < tend)
     {
         t1 = high_resolution_clock::now();
         hipLaunchKernelGGL(gpu_evolve,    dim3(nBlocks), dim3(block_size), 0, 0, s, dt);
         hipLaunchKernelGGL(gpu_cons2prim, dim3(nBlocks), dim3(block_size), 0, 0, s);
 
-        t2 = high_resolution_clock::now();
-        delta_t = t2 - t1;
-        zu_avg += nzones / delta_t.count();
-        std::cout << std::fixed << std::setprecision(3) << std::scientific;
-            std::cout << "\r"
-                << "Iteration: " << std::setw(5) << n 
-                << "\t"
-                << "Time: " << std::setw(10) <<  t
-                << "\t"
-                << "Zones/sec: "<< nzones / delta_t.count() << std::flush;
+        if (n >= nfold){
+            ncheck += 1;
+            t2 = high_resolution_clock::now();
+            delta_t = t2 - t1;
+            zu_avg += nzones / delta_t.count();
+            std::cout << std::fixed << std::setprecision(3) << std::scientific;
+                std::cout << "\r"
+                    << "Iteration: " << std::setw(5) << n 
+                    << "\t"
+                    << "Time: " << std::setw(10) <<  t
+                    << "\t"
+                    << "Zones/sec: "<< nzones / delta_t.count() << std::flush;
+            nfold += 1000;
+        }
 
         t += dt;
         n++;
     }
     std::cout << "\n";
-    std::cout << "Average zone_updates/sec for: " << n << " iterations was " << zu_avg / n << " zones/sec" << "\n";
+    std::cout << "Average zone_updates/sec for: " 
+    << n << " iterations was " 
+    << zu_avg / ncheck << " zones/sec" << "\n";
 
 }
 
