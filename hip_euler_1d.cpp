@@ -341,8 +341,8 @@ void SimDualSpace::cleanUp()
 {
     printf("Freeing Device Memory...\n");
     hipFree(host_u0);
-    hipFree(host_u1);
-    hipFree(host_dudt);
+    // hipFree(host_u1);
+    // hipFree(host_dudt);
     hipFree(host_prims);
     printf("Memory Freed.\n");
     
