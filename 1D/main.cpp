@@ -7,19 +7,17 @@
 
 #include <stdio.h>
 #include <iostream>
-#include <iomanip>
-#include <chrono>
 #include "datawrite.hpp"
-
 #include "hip_euler_1d.hpp"
 
+
 using namespace hip_euler;
-using namespace std::chrono;
+
 static constexpr int BLOCK_SIZE = 32;
 
 int main(int argc, char ** argv)
 {
-    const int nzones = 1 << 16;
+    const int nzones = 512; // << 16;
     double xmin = 0.0;
     double xmax = 1.0;
     double dx   = (xmax - xmin)/nzones;

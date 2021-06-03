@@ -207,6 +207,40 @@ __global__ void hip_euler::gpu_evolve(SimState * s, double dt)
 
 }
 
+// __global__ void hip_euler::gpu_evolve2(SimState * s, double dt)
+// {
+//     int tid = hipThreadIdx_x;
+//     extern __shared__ double myblock[];
+//     double tmp; 
+
+//     Conserved ul, ur, fl, fr, frf, flf;
+//     Primitive pl, pr;
+//     if (ii < s->nzones){
+//         // i-1/2 face
+//         ul = s->sys_state[(tid > 0) ? tid - 1 : 0];
+//         ur = s->sys_state[tid];
+//         pl = s->prims[(tid > 0) ? tid - 1 : 0]
+//         pr = s->prims[tid];   
+
+//         fl  = s->prims2flux(pl);
+//         fr  = s->prims2flux(pr);
+//         flf = s->calc_hll_flux(ul, ur, fl, fr, pl, pr);
+
+//         // i+1/2 face
+//         ul = s->sys_state[tid];
+//         ur = s->sys_state[(tid < hipBlockDim_x - 1) ? tid + 1 : tid];
+//         pl = s->prims[tid];
+//         pr = s->prims[(tid < hipBlockDim_x - 1) ? tid + 1 : tid]];   
+
+//         fl  = s->prims2flux(pl);
+//         fr  = s->prims2flux(pr);
+//         frf = s->calc_hll_flux(ul, ur, fl, fr, pl, pr); 
+
+//         s->sys_state[tid] -= (frf - flf) / s->dx * dt ;
+//     }
+
+// }
+
 __global__ void hip_euler::gpu_cons2prim(SimState *s){
     int ii = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     if (ii < s->nzones){
