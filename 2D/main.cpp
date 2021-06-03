@@ -17,8 +17,8 @@ static constexpr int BLOCK_SIZE = 4;
 
 int main(int argc, char ** argv)
 {
-    const int nx = 256;
-    const int ny = 256;
+    const int nx = 128;
+    const int ny = 128;
     double xmin = -1.0;
     double xmax =  1.0;
     double ymin = -1.0;

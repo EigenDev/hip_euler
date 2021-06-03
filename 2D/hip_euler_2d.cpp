@@ -61,9 +61,7 @@ void SimState::initializeModel(
     dx     = (xmax - xmin) / nx;
     dy     = (ymax - ymin) / ny;
 
-    double radius = 0.25 * sqrt( (xmax - xmin) * (xmax - xmin) + (ymax - ymin) * (ymax - ymin));
-    std::cout << radius << "\n";
-    std::cin.get();
+    double radius = sqrt( (xmax - xmin) * (xmax - xmin) + (ymax - ymin) * (ymax - ymin));
     // Allocate array of conservatives
     sys_state = (Conserved*) malloc(nx * ny * sizeof(Conserved));
     // u1        = (Conserved*) malloc(numzones * sizeof(Conserved));
@@ -258,6 +256,7 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
     int nx = s->nx;
     int ny = s->ny;
 
+    
     if (ii < s->nx && jj < s->ny){
         // (i,j)-1/2 face
         uxl = (ii > 0) ? s->sys_state[jj*nx + ii - 1]   : s->sys_state[jj * nx + ii];
@@ -275,6 +274,7 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
         gr  = s->prims2flux(pyr, 2);
         flf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
         glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
+        
 
         // i+1/2 face
         uxl =                                                    s->sys_state[jj * nx + ii];
@@ -290,8 +290,8 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
         fr  = s->prims2flux(pxr, 1);
         gl  = s->prims2flux(pyl, 2);
         gr  = s->prims2flux(pyr, 2);
-        flf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-        glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
+        frf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+        grf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
 
         s->sys_state[jj*nx + ii] -= (frf - flf) / s->dx * dt + (grf - glf) / s->dy * dt ;
     }

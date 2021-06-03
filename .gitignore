@@ -1,4 +1,4 @@
-sod_test.h5
 gpuEuler
 *.o
 .vscode
+*.h5
