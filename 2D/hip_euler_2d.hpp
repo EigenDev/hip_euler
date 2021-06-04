@@ -136,7 +136,9 @@ namespace hip_euler2d
     };
 
     __global__ void gpu_evolve(SimState * s, double dt);
+    __global__ void shared_gpu_evolve(SimState * s, double dt);
     __global__ void gpu_cons2prim(SimState *s);
+    __global__ void shared_gpu_cons2prim(SimState *s);
 
     void evolve(SimState *s, int nxBlocks, int nyBlocks, int block_size, int nzones, double tend, double dt);
     
