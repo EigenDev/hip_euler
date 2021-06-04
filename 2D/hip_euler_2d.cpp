@@ -437,9 +437,6 @@ void SimDualSpace::copyGPUStateToHost(
     hipCheckErrors("Memcpy failed at transferring device conservatives to host");
     hipMemcpy(host.prims,     host_prims ,    nx * ny * sizeof(Primitive), hipMemcpyDeviceToHost);
     hipCheckErrors("Memcpy failed at transferring device prims to host");
-
-    std::cout << "Printing Prims" << "\n";
-    std::cout << host.prims[(ny/2)*nx + (nx/2)].rho << "\n";
     
 }
 
