@@ -326,42 +326,35 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         conserved_buff[tya][txa] = s->sys_state[gid];
         primitive_buff[tya][txa] = s->prims[gid];
         
-        // Load ghost zones only as when out of thread bounds
-        conserved_buff[tya][txa - 1] = 
-            (txa > 1) ? conserved_buff[tya][txa - 1]  :
-            (ii > 0 ) ? s->sys_state[jj*nx + ii - 1]  : conserved_buff[tya][txa];
+        // If I'm at the thread block boundary, load the global neighbor
+        if (txa == 1){
+            conserved_buff[tya][txa - 1] = 
+                (ii > 0)  ? s->sys_state[jj*nx + ii - 1]   : conserved_buff[tya][txa];
+            primitive_buff[tya][txa - 1] =
+                (ii > 0)  ? s->prims[jj*nx + ii - 1]       : primitive_buff[tya][txa];
+        }
+        if (txa == wx){
+            conserved_buff[tya][txa + 1] = 
+                (ii < nx - 1) ? s->sys_state[jj*nx + ii + 1] : conserved_buff[tya][txa];
+            primitive_buff[tya][txa + 1] = 
+                (ii < nx - 1) ? s->prims[jj*nx + ii + 1]  : primitive_buff[tya][txa];
+        }
 
-        conserved_buff[tya][txa + 1] = 
-            (tx < wx - 1) ? conserved_buff[tya][txa + 1] :
-            (ii < nx - 1) ? s->sys_state[jj*nx + ii + 1] : conserved_buff[tya][txa];
-
-        conserved_buff[tya - 1][txa] = 
-            (tya > 1) ? conserved_buff[tya - 1][txa]   :
-            (jj > 0 ) ? s->sys_state[(jj - 1)*nx + ii]  : conserved_buff[tya][txa];
-
-        conserved_buff[tya + 1][txa] = 
-            (ty < wy - 1) ? conserved_buff[tya + 1][txa] :
-            (jj < ny - 1) ? s->sys_state[(jj + 1) * nx + ii]  : conserved_buff[tya][txa];
-
-
-        primitive_buff[tya][txa - 1] = 
-            (txa > 1) ? primitive_buff[tya][txa - 1]  :
-            (ii > 0) ? s->prims[jj*nx + ii - 1]  : primitive_buff[tya][txa];
-
-        primitive_buff[tya][txa + 1] = 
-            (tx < wx - 1) ? primitive_buff[tya][txa + 1] :
-            (ii < nx - 1) ? s->prims[jj*nx + ii + 1]  : primitive_buff[tya][txa];
-
-        primitive_buff[tya - 1][txa] = 
-            (tya > 1) ? primitive_buff[tya - 1][txa]   :
-            (jj > 0) ? s->prims[(jj - 1)*nx + ii]  : primitive_buff[tya][txa];
-
-        primitive_buff[tya + 1][txa] = 
-            (ty < wy - 1) ? primitive_buff[tya + 1][txa] :
-            (jj < ny - 1) ? s->prims[(jj + 1) * nx + ii]  : primitive_buff[tya][txa];
-
+        if (tya == 1){
+            conserved_buff[tya - 1][txa] = 
+                (jj > 0 ) ? s->sys_state[(jj - 1)*nx + ii]  : conserved_buff[tya][txa];
+            primitive_buff[tya - 1][txa] = 
+                (jj > 0) ?  s->prims[(jj - 1)*nx + ii]  : primitive_buff[tya][txa];
+        }
+        if (tya == wy){
+            conserved_buff[tya + 1][txa] = 
+                (jj < ny - 1) ? s->sys_state[(jj + 1) * nx + ii]  : conserved_buff[tya][txa];
+            primitive_buff[tya + 1][txa] = 
+                (jj < ny - 1) ? s->prims[(jj + 1) * nx + ii]  : primitive_buff[tya][txa];
+        }   
+            
         // synchronize threads (maybe)
-        __syncthreads();
+        // __syncthreads();
 
         // (i,j)-1/2 face
         uxl  = conserved_buff[tya][txa - 1]; 
@@ -417,7 +410,8 @@ __global__ void hip_euler2d::gpu_cons2prim(SimState *s){
         double v2 = s->sys_state[jj*nx + ii].m2/s->sys_state[jj*nx + ii].rho;
 
         double p = 
-            (ADIABATIC_GAMMA - 1.0) * (s->sys_state[jj*nx + ii].energy - 0.5 * s->sys_state[jj * nx + ii].rho * (v1 * v1 + v2*v2));
+            (ADIABATIC_GAMMA - 1.0) * (s->sys_state[jj*nx + ii].energy 
+                - 0.5 * s->sys_state[jj * nx + ii].rho * (v1 * v1 + v2*v2));
 
         s->prims[jj*nx + ii] = Primitive{s->sys_state[jj*nx + ii].rho, v1, v2, p};
 
@@ -450,7 +444,8 @@ __global__ void hip_euler2d::shared_gpu_cons2prim(SimState *s){
         double v2 = conserved_buff[ty][tx].m2/conserved_buff[ty][tx].rho;
 
         double p = 
-            (ADIABATIC_GAMMA - 1.0) * (conserved_buff[ty][tx].energy - 0.5 * conserved_buff[ty][tx].rho * (v1 * v1 + v2*v2));
+            (ADIABATIC_GAMMA - 1.0) * (conserved_buff[ty][tx].energy 
+                - 0.5 * conserved_buff[ty][tx].rho * (v1 * v1 + v2*v2));
 
         // Write back to global
         s->prims[gid] = Primitive{conserved_buff[ty][tx].rho, v1, v2, p};
