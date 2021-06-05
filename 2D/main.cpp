@@ -13,12 +13,12 @@
 
 using namespace hip_euler2d;
 
-static constexpr int BLOCK_SIZE = 4;
+static constexpr int BLOCK_SIZE = 16;
 
 int main(int argc, char ** argv)
 {
-    const int nx = 128;
-    const int ny = 128;
+    const int nx = 256;
+    const int ny = 256;
     double xmin = -1.0;
     double xmax =  1.0;
     double ymin = -1.0;
@@ -44,7 +44,7 @@ int main(int argc, char ** argv)
     int nxBlocks = (nx + BLOCK_SIZE - 1) / BLOCK_SIZE;
     int nyBlocks = (ny + BLOCK_SIZE - 1) / BLOCK_SIZE;
     double tend = 0.1;
-    double dt = dx * 0.0001;
+    double dt = dx * 0.001;
 
     // Evolve it 
     evolve(d_sim, nxBlocks, nyBlocks, BLOCK_SIZE, nx*ny, tend, dt);
