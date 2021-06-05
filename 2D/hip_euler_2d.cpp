@@ -300,11 +300,13 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 
 __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
 {
-    __shared__ Conserved conserved_buff[4 + 2][4 + 2];
-    __shared__ Primitive primitive_buff[4 + 2][4 + 2];
+    __shared__ Conserved conserved_buff[16 + 2][16 + 2];
+    __shared__ Primitive primitive_buff[16 + 2][16 + 2];
 
     int ii = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int jj = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    int tx = threadIdx.x;
+    int ty = threadIdx.y;
     int txa = threadIdx.x + 1;
     int tya = threadIdx.y + 1;
     int wx = hipBlockDim_x;
@@ -316,36 +318,46 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     Primitive pxl, pxr, pyl, pyr;
 
     // printf("TY: %d, TY roll to left: %d Block_dim: %d\n", ty, (unsigned)(ty - 1)%wy, wy);
-
+    // printf("Index coords: (%d, %d)\n", jj, ii);
     if (ii < s->nx && jj < s->ny){
         int gid = jj*nx + ii;
 
         // load shared memory
         conserved_buff[tya][txa] = s->sys_state[gid];
         primitive_buff[tya][txa] = s->prims[gid];
-
+        
+        // Load ghost zones only as when out of thread bounds
         conserved_buff[tya][txa - 1] = 
-            (ii > 0) ? s->sys_state[jj*nx + ii - 1]  : conserved_buff[tya][txa];
+            (txa > 1) ? conserved_buff[tya][txa - 1]  :
+            (ii > 0 ) ? s->sys_state[jj*nx + ii - 1]  : conserved_buff[tya][txa];
 
         conserved_buff[tya][txa + 1] = 
-            (ii < nx - 1) ? s->sys_state[jj*nx + ii + 1]  : conserved_buff[tya][txa];
+            (tx < wx - 1) ? conserved_buff[tya][txa + 1] :
+            (ii < nx - 1) ? s->sys_state[jj*nx + ii + 1] : conserved_buff[tya][txa];
 
         conserved_buff[tya - 1][txa] = 
-            (jj > 0) ? s->sys_state[(jj - 1)*nx + ii]  : conserved_buff[tya][txa];
+            (tya > 1) ? conserved_buff[tya - 1][txa]   :
+            (jj > 0 ) ? s->sys_state[(jj - 1)*nx + ii]  : conserved_buff[tya][txa];
 
         conserved_buff[tya + 1][txa] = 
+            (ty < wy - 1) ? conserved_buff[tya + 1][txa] :
             (jj < ny - 1) ? s->sys_state[(jj + 1) * nx + ii]  : conserved_buff[tya][txa];
 
+
         primitive_buff[tya][txa - 1] = 
+            (txa > 1) ? primitive_buff[tya][txa - 1]  :
             (ii > 0) ? s->prims[jj*nx + ii - 1]  : primitive_buff[tya][txa];
 
         primitive_buff[tya][txa + 1] = 
+            (tx < wx - 1) ? primitive_buff[tya][txa + 1] :
             (ii < nx - 1) ? s->prims[jj*nx + ii + 1]  : primitive_buff[tya][txa];
 
         primitive_buff[tya - 1][txa] = 
+            (tya > 1) ? primitive_buff[tya - 1][txa]   :
             (jj > 0) ? s->prims[(jj - 1)*nx + ii]  : primitive_buff[tya][txa];
 
         primitive_buff[tya + 1][txa] = 
+            (ty < wy - 1) ? primitive_buff[tya + 1][txa] :
             (jj < ny - 1) ? s->prims[(jj + 1) * nx + ii]  : primitive_buff[tya][txa];
 
         // synchronize threads (maybe)
@@ -413,8 +425,8 @@ __global__ void hip_euler2d::gpu_cons2prim(SimState *s){
 }
 
 __global__ void hip_euler2d::shared_gpu_cons2prim(SimState *s){
-    __shared__ Conserved  conserved_buff[4][4];
-    __shared__ Primitive  primitive_buff[4][4];
+    __shared__ Conserved  conserved_buff[16][16];
+    __shared__ Primitive  primitive_buff[16][16];
 
     int ii = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int jj = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
