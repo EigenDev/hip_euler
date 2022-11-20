@@ -11,7 +11,7 @@ with h5py.File("sod_test2d.h5", "r+") as hf:
     nx        = sim_info.attrs['nx']
     ny        = sim_info.attrs['ny']
 
-rho = rho.reshape(ny, nx)
+rho = rho.reshape(nx, ny)
     
 x = np.linspace(-1.0, 1.0, rho.shape[1])
 y = np.linspace(-1.0, 1.0, rho.shape[0])

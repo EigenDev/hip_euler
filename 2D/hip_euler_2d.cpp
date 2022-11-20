@@ -71,11 +71,18 @@ void SimState::initializeModel(
     for (int jj = 0; jj < ny; jj++)
     {
         for (int ii = 0; ii < nx; ii++){
+            int gid = [&](){
+                #ifdef __HIPCC__
+                return ii * ny + jj;
+                #else 
+                return jj * nx + ii;
+                #endif
+            }();
             ds = sqrt( (ii * dx)*(ii * dx) + (jj * dy)*(jj * dy) ) ;
             if (ds < 0.5 * radius ){
-                prims[jj * nx + ii] = Primitive{1.0, 0.0, 0.0, 1.0};
+                prims[gid] = Primitive{1.0, 0.0, 0.0, 1.0};
             } else {
-                prims[jj * nx + ii] = Primitive{0.125, 0.0, 0.0, 0.1};
+                prims[gid] = Primitive{0.125, 0.0, 0.0, 0.1};
             }
         }
     }
@@ -94,17 +101,23 @@ SimState::~SimState(){
 // Convert from the conservarive array to primitive and cache it
 GPU_CALLABLE_MEMBER void SimState::cons2prim(const Conserved *u)
 {   
-    double v1, v2, p;
+    double v1, v2, p, rho;
     for (int jj = 0; jj < ny; jj++){
 
         for(int ii = 0; ii < nx; ii++){
-            v1 = u[jj*nx + ii].m1/u[jj * nx + ii].rho;
-            v2 = u[jj*nx + ii].m2/u[jj * nx + ii].rho;
+            int gid = [&](){
+                #ifdef __HIPCC__
+                return ii * ny + jj;
+                #else 
+                return jj * nx + ii;
+                #endif
+            }();
 
-            p = 
-                (ADIABATIC_GAMMA - 1.0) * (u[jj * nx + ii].energy - 0.5 * u[jj * nx + ii].rho * (v1 * v1 + v2 * v2));
-
-            prims[jj * nx + ii] = Primitive{u[jj * nx + ii].rho, v1, v2, p};
+            rho = u[gid].rho;
+            v1 = u[gid].m1 / u[gid].rho;
+            v2 = u[gid].m2 / u[gid].rho;
+            p  = (ADIABATIC_GAMMA - 1.0) *  ( u[gid].energy - 0.5 * rho * (v1 * v1 + v2 * v2));
+            prims[gid] = Primitive {rho, v1, v2, p};
 
         }
     }
