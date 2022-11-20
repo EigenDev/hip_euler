@@ -302,7 +302,7 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
 {
     constexpr auto bi = SH_BLOCK_SIZE;
     constexpr auto bj = SH_BLOCK_SIZE;
-    __shared__ Primitive primitive_buff[];
+    extern __shared__ Primitive primitive_buff[];
     int jj  = blockDim.x * blockIdx.x + threadIdx.x;
     int ii  = blockDim.y * blockIdx.y + threadIdx.y;
     int tj  = threadIdx.x;
@@ -317,7 +317,7 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     Primitive pxl, pxr, pyl, pyr;
     if (ii < ni && jj < nj){
         int gid = s->get_global_idx(ii, jj);
-        primitive_buff[txa][tya] = s->prims[gid];
+        primitive_buff[txa * bj + tya * bi] = s->prims[gid];
         
         // If I'm at the thread block boundary, load the global neighbor
         // if (txa == 1){
@@ -436,7 +436,7 @@ __global__ void hip_euler2d::shared_gpu_cons2prim(SimState *s){
     }
 }
 
-void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int block_size, int nzones, double tend, double dt)
+void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blocks, int nzones, double tend, double dt)
 {
     double t = 0.0;
     high_resolution_clock::time_point t1, t2;
@@ -446,7 +446,7 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int block_size
     int nfold = 10;
     int ncheck = 0;
     dim3 group_size = dim3(nxBlocks, nyBlocks, 1);
-    dim3 block_size = dim3(block_size, block_size, 1);
+    dim3 block_size = dim3(shared_blocks, shared_blocks, 1);
     int shared_memory = (block_size.x + 2) * (block_size.y + 2) * sizeof(Primitive);
     while (t < tend)
     {
