@@ -301,19 +301,17 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 constexpr int SH_BLOCK_SIZE = 16;
 __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
 {
-    __shared__ Conserved conserved_buff[SH_BLOCK_SIZE + 2][SH_BLOCK_SIZE + 2];
     __shared__ Primitive primitive_buff[SH_BLOCK_SIZE + 2][SH_BLOCK_SIZE + 2];
-
-    int ii = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int jj = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    int tx = threadIdx.x;
-    int ty = threadIdx.y;
+    int ii  = blockDim.x * blockIdx.x + threadIdx.x;
+    int jj  = blockDim.y * blockIdx.y + threadIdx.y;
+    int tx  = threadIdx.x;
+    int ty  = threadIdx.y;
     int txa = threadIdx.x + 1;
     int tya = threadIdx.y + 1;
-    int wx = hipBlockDim_x;
-    int wy = hipBlockDim_y;
-    int nx = s->nx;
-    int ny = s->ny;
+    int wx  = blockDim.x;
+    int wy  = blockDim.y;
+    int nx  = s->nx;
+    int ny  = s->ny;
 
     Conserved uxl, uxr, uyl, uyr, fl, fr, gl, gr,  frf, flf, grf, glf;
     Primitive pxl, pxr, pyl, pyr;
@@ -321,22 +319,12 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     // printf("TY: %d, TY roll to left: %d Block_dim: %d\n", ty, (unsigned)(ty - 1)%wy, wy);
     // printf("Index coords: (%d, %d)\n", jj, ii);
     if (ii < s->nx && jj < s->ny){
-        int gid = jj*nx + ii;
+        int gid = jj * nx + ii;
 
-        // load shared memory
-        conserved_buff[tya][txa] = s->sys_state[gid];
         primitive_buff[tya][txa] = s->prims[gid];
         
         // If I'm at the thread block boundary, load the global neighbor
         if (txa == 1){
-            conserved_buff[tya][txa - 1] = 
-                (ii > 0)  ? s->sys_state[jj*nx + ii - 1]   : conserved_buff[tya][txa];
-
-            conserved_buff[tya][txa + SH_BLOCK_SIZE] = 
-                (ii + SH_BLOCK_SIZE > nx - 1) ? s->sys_state[jj*nx + (nx - 1)] 
-                    : s->sys_state[jj*nx + (ii + SH_BLOCK_SIZE)];
-
-
             primitive_buff[tya][txa - 1] =
                 (ii > 0)  ? s->prims[jj*nx + ii - 1] : primitive_buff[tya][txa];
 
@@ -345,14 +333,6 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
                     : s->prims[jj*nx + (ii + SH_BLOCK_SIZE)];
         }
         if (tya == 1){
-            conserved_buff[tya - 1][txa] = 
-                (jj > 0 ) ? s->sys_state[(jj - 1)*nx + ii] : conserved_buff[tya][txa];
-
-            conserved_buff[tya + SH_BLOCK_SIZE][txa] = 
-                (jj + SH_BLOCK_SIZE > ny - 1) ? s->sys_state[(ny - 1)*nx + ii] 
-                    : s->sys_state[(jj + SH_BLOCK_SIZE)*nx + ii];
-
-
             primitive_buff[tya - 1][txa] = 
                 (jj > 0) ?  s->prims[(jj - 1)*nx + ii] : primitive_buff[tya][txa];
 
@@ -362,18 +342,18 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         }
             
         // synchronize threads (maybe)
-       //  __syncthreads();
+        __syncthreads();
 
         // (i,j)-1/2 face
-        uxl  = conserved_buff[tya][txa - 1]; 
-        uxr  = conserved_buff[tya][txa];
-        uyl  = conserved_buff[tya - 1][txa]; 
-        uyr  = conserved_buff[tya][txa];
-
         pxl  = primitive_buff[tya][txa - 1]; 
         pxr  = primitive_buff[tya][txa];
         pyl  = primitive_buff[tya - 1][txa]; 
-        pyr  = primitive_buff[tya][txa];                                      
+        pyr  = primitive_buff[tya][txa];        
+
+        uxl  = s->prims2cons(pxl);
+        uxr  = s->prims2cons(pxr);
+        uyl  = s->prims2cons(pyl);
+        uyr  = s->prims2cons(pyr);                         
 
         fl  = s->prims2flux(pxl, 1);
         fr  = s->prims2flux(pxr, 1);
@@ -384,22 +364,22 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         
 
         // // i+1/2 face
-        uxl = conserved_buff[tya][txa];
-        uxr = conserved_buff[tya][txa + 1];
-        uyl = conserved_buff[tya][txa];
-        uyr = conserved_buff[tya + 1][txa];
-
         pxl  = primitive_buff[tya][txa];
         pxr  = primitive_buff[tya][txa + 1];
         pyl  = primitive_buff[tya][txa];
-        pyr  = primitive_buff[tya + 1][txa];                      
+        pyr  = primitive_buff[tya + 1][txa];       
 
-        fl  = s->prims2flux(pxl, 1);
-        fr  = s->prims2flux(pxr, 1);
-        gl  = s->prims2flux(pyl, 2);
-        gr  = s->prims2flux(pyr, 2);
-        frf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-        grf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
+        uxl  = s->prims2cons(pxl);
+        uxr  = s->prims2cons(pxr);
+        uyl  = s->prims2cons(pyl);
+        uyr  = s->prims2cons(pyr);     
+
+        fl   = s->prims2flux(pxl, 1);
+        fr   = s->prims2flux(pxr, 1);
+        gl   = s->prims2flux(pyl, 2);
+        gr   = s->prims2flux(pyr, 2);
+        frf  = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+        grf  = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
 
         s->sys_state[gid] -= (frf - flf) / s->dx * dt + (grf - glf) / s->dy * dt ;
     }
@@ -474,7 +454,7 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int block_size
     {
         t1 = high_resolution_clock::now();
         hipLaunchKernelGGL(shared_gpu_evolve,    dim3(nxBlocks, nyBlocks), dim3(block_size, block_size), 0, 0, s, dt);
-        hipLaunchKernelGGL(shared_gpu_cons2prim, dim3(nxBlocks, nyBlocks), dim3(block_size, block_size), 0, 0, s);
+        hipLaunchKernelGGL(gpu_cons2prim, dim3(nxBlocks, nyBlocks), dim3(block_size, block_size), 0, 0, s);
         hipDeviceSynchronize();
         // std::cout << n << "\n";
         // hipCheckErrors("Kernel died: ");
