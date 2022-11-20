@@ -272,7 +272,7 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
     uyr  = s->sys_state[gid];
     pxl  = (ii > 0) ? s->prims[jj * jstride + (ii - 1) * istride] : s->prims[jj * jstride + ii * istride];
     pxr  = s->prims[gid];
-    pyl  = (jj > 0) ? s->prims[(jj - 1) * jstride + ii * stride] : s->prims[gid];
+    pyl  = (jj > 0) ? s->prims[(jj - 1) * jstride + ii * istride] : s->prims[gid];
     pyr  = s->prims[gid];                    
 
     fl  = s->prims2flux(pxl, 1);
