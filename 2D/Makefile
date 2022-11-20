@@ -21,9 +21,9 @@ ifeq (,$(HIP_PATH))
 endif
 
 CXX=${HIPCC}
-CXXFLAGS = -I. -I/
+CXXFLAGS = -std=c++17 -I. -I/public/apps/hdf5/1.12.0/gcc.7.3.1/include
 LDFLAGS = -lhdf5 -lhdf5_cpp
-LD_LIBRARY_PATH := 
+LD_LIBRARY_PATH := /public/apps/hdf5/1.12.0/gcc.7.3.1/lib
 LIBS=-L$(LD_LIBRARY_PATH) $(LDFLAGS)
 
 ifeq (, ${LD_LIBRARY_PATH})
