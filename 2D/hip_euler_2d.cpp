@@ -376,7 +376,7 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         frf  = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
         grf  = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
 
-        s->sys_state[gid] -= (frf - flf) / s->dx * dt + (grf - glf) / s->dy * dt ;
+        s->sys_state[gid] -= null; // (frf - flf) / s->dx * dt + (grf - glf) / s->dy * dt ;
     }
 
 }
