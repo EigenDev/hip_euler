@@ -350,12 +350,12 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         uyl  = null; // s->prims2cons(pyl);
         uyr  = null; // s->prims2cons(pyr);                         
 
-        fl  = nul; // s->prims2flux(pxl, 1);
-        fr  = nul; // s->prims2flux(pxr, 1);
-        gl  = nul; // s->prims2flux(pyl, 2);
-        gr  = nul; // s->prims2flux(pyr, 2);
-        flf = nul; // s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-        glf = nul; // s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
+        fl  = null; // s->prims2flux(pxl, 1);
+        fr  = null; // s->prims2flux(pxr, 1);
+        gl  = null; // s->prims2flux(pyl, 2);
+        gr  = null; // s->prims2flux(pyr, 2);
+        flf = null; // s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+        glf = null; // s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
         
 
         // // i+1/2 face
