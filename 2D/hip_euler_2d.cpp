@@ -302,7 +302,7 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
 {
     constexpr auto bi = SH_BLOCK_SIZE;
     constexpr auto bj = SH_BLOCK_SIZE;
-    __shared__ Primitive primitive_buff[bj + 2][bi + 2];
+    __shared__ Primitive primitive_buff[];
     int jj  = blockDim.x * blockIdx.x + threadIdx.x;
     int ii  = blockDim.y * blockIdx.y + threadIdx.y;
     int tj  = threadIdx.x;
@@ -445,11 +445,14 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int block_size
     int n = 1;
     int nfold = 10;
     int ncheck = 0;
+    dim3 group_size = dim3(nxBlocks, nyBlocks, 1);
+    dim3 block_size = dim3(block_size, block_size, 1);
+    int shared_memory = (block_size.x + 2) * (block_size.y + 2) * sizeof(Primitive);
     while (t < tend)
     {
         t1 = high_resolution_clock::now();
-        hipLaunchKernelGGL(shared_gpu_evolve, dim3(nxBlocks, nyBlocks), dim3(block_size, block_size), 0, 0, s, dt);
-        hipLaunchKernelGGL(gpu_cons2prim, dim3(nxBlocks, nyBlocks), dim3(block_size, block_size), 0, 0, s);
+        hipLaunchKernelGGL(shared_gpu_evolve, group_size, block_size, shared_memory, 0, s, dt);
+        hipLaunchKernelGGL(gpu_cons2prim, group_size, block_size, 0, 0, s);
         hipDeviceSynchronize();
         if (n >= nfold){
             ncheck += 1;
