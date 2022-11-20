@@ -245,9 +245,6 @@ GPU_CALLABLE_MEMBER Conserved SimState::prims2flux(const Primitive &prims, const
 
 __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 {
-    constexpr auto bi = SH_BLOCK_SIZE;
-    constexpr auto bj = SH_BLOCK_SIZE;
-    extern __shared__ Primitive primitive_buff[];
     int jj  = blockDim.x * blockIdx.x + threadIdx.x;
     int ii  = blockDim.y * blockIdx.y + threadIdx.y;
     int ni  = s->get_max_i_stride();
@@ -266,15 +263,16 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
     // printf("Thread coord: (%d, %d)\n", hipThreadIdx_x, hipThreadIdx_y);
     // printf("Global Index: %d    \n",  jj*s->nx + ii);
     if (ii < ni && jj < nj){
+        int gid = s->get_global_idx(ii, jj);
         // (i,j)-1/2 face
-        uxl  = (ii > 0) ? s->sys_state[jj * jstride + (ii - 1) * ]   : s->sys_state[jj * nx + ii];
-        uxr  =                                             s->sys_state[jj * nx + ii];
-        uyl  = (jj > 0) ? s->sys_state[(jj - 1)*nx + ii] : s->sys_state[jj * nx + ii];
-        uyr  =                                             s->sys_state[jj * nx + ii];
-        pxl  = (ii > 0) ? s->prims[jj*nx + ii - 1]      : s->prims[jj*nx + ii];
-        pxr  =                                            s->prims[jj*nx + ii];
-        pyl  = (jj > 0) ? s->prims[(jj - 1)*nx + ii]    : s->prims[jj*nx + ii];
-        pyr  =                                            s->prims[jj*nx + ii];                    
+        uxl  = (ii > 0) ? s->sys_state[jj * jstride + (ii - 1) * istride] : s->sys_state[gid];
+        uxr  = s->sys_state[gid];
+        uyl  = (jj > 0) ? s->sys_state[(jj - 1) * jstride + ii * istride] : s->sys_state[gid];
+        uyr  = s->sys_state[gid];
+        pxl  = (ii > 0) ? s->prims[jj * jstride + (ii - 1) * istride] : s->prims[jj * jstride + ii * istride];
+        pxr  = s->prims[gid];
+        pyl  = (jj > 0) ? s->prims[(jj - 1) * jstride + ii * stride] : s->prims[gid];
+        pyr  = s->prims[gid];                    
 
         fl  = s->prims2flux(pxl, 1);
         fr  = s->prims2flux(pxr, 1);
