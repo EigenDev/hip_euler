@@ -145,7 +145,7 @@ namespace hip_euler2d
 
         GPU_CALLABLE_MEMBER
         auto get_max_i_stride(){
-            #ifdef (__HIPCC__)
+            #ifdef __HIPCC__
             return ny;
             #else 
             return nx;
