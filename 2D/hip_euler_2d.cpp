@@ -317,7 +317,7 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     Primitive pxl, pxr, pyl, pyr;
     if (ii < ni && jj < nj){
         int gid = s->get_global_idx(ii, jj);
-        primitive_buff[txa * bj + tya * bi] = s->prims[gid];
+        primitive_buff[tia * bj + tja * bi] = s->prims[gid];
         
         // If I'm at the thread block boundary, load the global neighbor
         // if (txa == 1){
