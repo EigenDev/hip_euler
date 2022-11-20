@@ -19,5 +19,5 @@ y = np.linspace(-1.0, 1.0, rho.shape[0])
 xx, yy = np.meshgrid(x, y)
 
 plt.pcolormesh(xx, yy, rho, shading='auto')
-#plt.plot(x, rho[0])
+plt.savefig('sod.png')
 plt.show()
