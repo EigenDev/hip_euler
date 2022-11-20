@@ -13,7 +13,7 @@
 
 using namespace hip_euler2d;
 
-static constexpr int BLOCK_SIZE = 16;
+static constexpr int BLOCK_SIZE = 8;
 
 int main(int argc, char ** argv)
 {
