@@ -298,7 +298,6 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 
 }
 
-constexpr int SH_BLOCK_SIZE = 16;
 __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
 {
     __shared__ Primitive primitive_buff[SH_BLOCK_SIZE + 2][SH_BLOCK_SIZE + 2];
