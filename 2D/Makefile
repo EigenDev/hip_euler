@@ -21,7 +21,7 @@ ifeq (,$(HIP_PATH))
 endif
 
 CXX=${HIPCC}
-CXXFLAGS = -I.
+CXXFLAGS = -I. -I/
 LDFLAGS = -lhdf5 -lhdf5_cpp
 LD_LIBRARY_PATH := 
 LIBS=-L$(LD_LIBRARY_PATH) $(LDFLAGS)
@@ -35,15 +35,9 @@ SOURCES=$(wildcard *.cpp)
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=./gpuEuler
 
-.PHONY: test
-
-all: $(EXECUTABLE) test
 
 $(EXECUTABLE): $(OBJECTS)
 		$(CXX) $(CXXFLAGS) $(LIBS) $(OBJECTS) -o $@
-
-test: $(EXECUTABLE)
-		$(EXECUTABLE)
 
 # %.o: %.cpp
 # 		$(CXX) $(CXXFLAGS) $(LDFLAGS) -dc $< -o $@	

@@ -133,6 +133,33 @@ namespace hip_euler2d
         GPU_CALLABLE_MEMBER Conserved prims2flux(const Primitive &prims, int nhat);
 
         void udot (int nBlocks, int block_size);
+
+        GPU_CALLABLE_MEMBER
+        auto get_max_j_stride(){
+            #ifdef (__HIPCC__)
+            return nx;
+            #else 
+            return ny;
+            #endif 
+        }
+
+        GPU_CALLABLE_MEMBER
+        auto get_max_i_stride(){
+            #ifdef (__HIPCC__)
+            return ny;
+            #else 
+            return nx;
+            #endif 
+        }
+
+        GPU_CALLABLE_MEMBER
+        auto get_global_idx(const int ii, const int jj) {
+            #ifdef __HIPCC__
+            return ii * ny + jj;
+            #else 
+            return jj * nx + ii;
+            #endif 
+        }
     };
 
     __global__ void gpu_evolve(SimState * s, double dt);
