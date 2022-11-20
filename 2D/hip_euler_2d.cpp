@@ -153,33 +153,30 @@ GPU_CALLABLE_MEMBER EigenWave SimState::calc_waves(
     const Primitive &right_prims,
     const int nhat)
 {
-    double rhol = left_prims.rho;
-    double v1l  = left_prims.v1 ;
-    double v2l  = left_prims.v2 ;
-    double pl   = left_prims.p  ;
-
-    double rhor = right_prims.rho;
-    double v1r  = right_prims.v1;
-    double v2r  = right_prims.v2;
-    double pr   = right_prims.p  ;
-
-    double csl  = sqrt(ADIABATIC_GAMMA * pl / rhol);
-    double csr  = sqrt(ADIABATIC_GAMMA * pr/  rhor);
-
+    const double rhol = left_prims.rho;
+    const double pl   = left_prims.p  ;
+    const double rhor = right_prims.rho;
+    const double pr   = right_prims.p  ;
+    const double csl  = sqrt(ADIABATIC_GAMMA * pl / rhol);
+    const double csr  = sqrt(ADIABATIC_GAMMA * pr/  rhor);
     switch (nhat)
     {
     case 1:
         {
-            double aL   = min(v1l - csl, v1r - csr);
-            double aR   = max(v1r + csr, v1l + csl);
+            const double vr  = right_prims.v1;
+            const double vl  = left_prims.v1;
+            const double aL   = min(vl - csl, v1r - csr);
+            const double aR   = max(v1r + csr, vl + csl);
 
             return EigenWave(aL, aR);
         }
     
     case 2:
         {
-            double aL   = min(v2l - csl, v2r - csr);
-            double aR   = max(v2r + csr, v2l + csl);
+            const double vr  = right_prims.v2;
+            const double vl  = left_prims.v2;
+            const double aL   = min(vl - csl, vr - csr);
+            const double aR   = max(vr + csr, vl + csl);
 
             return EigenWave(aL, aR);
         }
