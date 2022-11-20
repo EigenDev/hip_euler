@@ -311,6 +311,7 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     int ni  = s->get_max_i_stride();
     int nj  = s->get_max_j_stride();
 
+    auto null = Conserved{0, 0, 0, 0};
     Conserved uxl, uxr, uyl, uyr, fl, fr, gl, gr,  frf, flf, grf, glf;
     Primitive pxl, pxr, pyl, pyr;
     if (ii < ni && jj < nj){
@@ -344,17 +345,17 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         pyl  = primitive_buff[txa - 1][tya]; 
         pyr  = primitive_buff[txa][tya];        
 
-        uxl  = s->prims2cons(pxl);
-        uxr  = s->prims2cons(pxr);
-        uyl  = s->prims2cons(pyl);
-        uyr  = s->prims2cons(pyr);                         
+        uxl  = null; // s->prims2cons(pxl);
+        uxr  = null; // s->prims2cons(pxr);
+        uyl  = null; // s->prims2cons(pyl);
+        uyr  = null; // s->prims2cons(pyr);                         
 
-        fl  = s->prims2flux(pxl, 1);
-        fr  = s->prims2flux(pxr, 1);
-        gl  = s->prims2flux(pyl, 2);
-        gr  = s->prims2flux(pyr, 2);
-        flf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-        glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
+        fl  = nul; // s->prims2flux(pxl, 1);
+        fr  = nul; // s->prims2flux(pxr, 1);
+        gl  = nul; // s->prims2flux(pyl, 2);
+        gr  = nul; // s->prims2flux(pyr, 2);
+        flf = nul; // s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+        glf = nul; // s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
         
 
         // // i+1/2 face
@@ -363,17 +364,17 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         pyl  = primitive_buff[txa][tya];
         pyr  = primitive_buff[txa + 1][tya];       
 
-        uxl  = s->prims2cons(pxl);
-        uxr  = s->prims2cons(pxr);
-        uyl  = s->prims2cons(pyl);
-        uyr  = s->prims2cons(pyr);     
+        uxl  = null; //s->prims2cons(pxl);
+        uxr  = null; //s->prims2cons(pxr);
+        uyl  = null; //s->prims2cons(pyl);
+        uyr  = null; //s->prims2cons(pyr);     
 
-        fl   = s->prims2flux(pxl, 1);
-        fr   = s->prims2flux(pxr, 1);
-        gl   = s->prims2flux(pyl, 2);
-        gr   = s->prims2flux(pyr, 2);
-        frf  = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-        grf  = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
+        fl   = null; // s->prims2flux(pxl, 1);
+        fr   = null; // s->prims2flux(pxr, 1);
+        gl   = null; // s->prims2flux(pyl, 2);
+        gr   = null; // s->prims2flux(pyr, 2);
+        frf  = null; // s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+        grf  = null; // s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
 
         s->sys_state[gid] -= (frf - flf) / s->dx * dt + (grf - glf) / s->dy * dt ;
     }
