@@ -386,7 +386,7 @@ __global__ void hip_euler2d::gpu_cons2prim(SimState *s){
     const int ii  = blockDim.y * blockIdx.y + threadIdx.y;
     const int ni  = s->get_max_i_stride();
     const int nj  = s->get_max_j_stride();
-    const int gid = s->get_global_idx(ii, jj); // ii * ni + jj;
+    const int gid = s->get_global_idx(ii, jj);
     if (ii < ni && jj < nj){
         double rho = s->sys_state[gid].rho;
         double v1  = s->sys_state[gid].m1/rho;
