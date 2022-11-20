@@ -166,7 +166,7 @@ GPU_CALLABLE_MEMBER EigenWave SimState::calc_waves(
             const double vr  = right_prims.v1;
             const double vl  = left_prims.v1;
             const double aL   = min(vl - csl, v1r - csr);
-            const double aR   = max(v1r + csr, vl + csl);
+            const double aR   = max(vr + csr, vl + csl);
 
             return EigenWave(aL, aR);
         }
