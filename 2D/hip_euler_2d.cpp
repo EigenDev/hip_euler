@@ -381,8 +381,8 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
 }
 
 __global__ void hip_euler2d::gpu_cons2prim(SimState *s){
-    const int ii  = blockDim.x * blockIdx.x + threadIdx.x;
-    const int jj  = blockDim.y * blockIdx.y + threadIdx.y;
+    const int jj  = blockDim.x * blockIdx.x + threadIdx.x;
+    const int ii  = blockDim.y * blockIdx.y + threadIdx.y;
     const int ni  = s->get_max_i_stride();
     const int nj  = s->get_max_j_stride();
     const int gid = ii * ni + jj;
