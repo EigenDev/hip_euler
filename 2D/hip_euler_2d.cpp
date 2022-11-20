@@ -300,13 +300,15 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 
 __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
 {
-    __shared__ Primitive primitive_buff[SH_BLOCK_SIZE + 2][SH_BLOCK_SIZE + 2];
+    constexpr auto bi = SH_BLOCK_SIZE;
+    constexpr auto bj = SH_BLOCK_SIZE;
+    __shared__ Primitive primitive_buff[bj + 2][bi + 2];
     int jj  = blockDim.x * blockIdx.x + threadIdx.x;
     int ii  = blockDim.y * blockIdx.y + threadIdx.y;
-    int ty  = threadIdx.x;
-    int tx  = threadIdx.y;
-    int txa = threadIdx.x + 1;
-    int tya = threadIdx.y + 1;
+    int tj  = threadIdx.x;
+    int ti  = threadIdx.y;
+    int tja = threadIdx.x + 1;
+    int tia = threadIdx.y + 1;
     int ni  = s->get_max_i_stride();
     int nj  = s->get_max_j_stride();
 
@@ -339,10 +341,10 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         __syncthreads();
 
         // (i,j)-1/2 face
-        pxl  = primitive_buff[txa][tya - 1]; 
-        pxr  = primitive_buff[txa][tya];
-        pyl  = primitive_buff[txa - 1][tya]; 
-        pyr  = primitive_buff[txa][tya];        
+        pxl  = primitive_buff[(tia + 0) * bj + (tja - 1) * bi]; 
+        pxr  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
+        pyl  = primitive_buff[(tia - 1) * bj + (tja + 0) * bi]; 
+        pyr  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];        
 
         uxl  = s->prims2cons(pxl);
         uxr  = s->prims2cons(pxr);
@@ -358,10 +360,10 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         
 
         // // i+1/2 face
-        pxl  = primitive_buff[txa][tya];
-        pxr  = primitive_buff[txa][tya + 1];
-        pyl  = primitive_buff[txa][tya];
-        pyr  = primitive_buff[txa + 1][tya];       
+        pxl  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
+        pxr  = primitive_buff[(tia + 0) * bj + (tja + 1) * bi];
+        pyl  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
+        pyr  = primitive_buff[(tia + 1) * bj + (tja + 0) * bi];       
 
         uxl  = s->prims2cons(pxl);
         uxr  = s->prims2cons(pxr);
