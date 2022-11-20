@@ -245,21 +245,32 @@ GPU_CALLABLE_MEMBER Conserved SimState::prims2flux(const Primitive &prims, const
 
 __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 {
-    int ii = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int jj = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    constexpr auto bi = SH_BLOCK_SIZE;
+    constexpr auto bj = SH_BLOCK_SIZE;
+    extern __shared__ Primitive primitive_buff[];
+    int jj  = blockDim.x * blockIdx.x + threadIdx.x;
+    int ii  = blockDim.y * blockIdx.y + threadIdx.y;
+    int ni  = s->get_max_i_stride();
+    int nj  = s->get_max_j_stride();
+
+    #ifdef __HIPCC_
+    const int istride = s->ny;
+    const int jstride = 1;
+    #else 
+    const int istride = 1;
+    const int jstride = s->nx;
+    #endif 
+
     Conserved uxl, uxr, uyl, uyr, fl, fr, gl, gr,  frf, flf, grf, glf;
     Primitive pxl, pxr, pyl, pyr;
-    int nx = s->nx;
-    int ny = s->ny;
-
     // printf("Thread coord: (%d, %d)\n", hipThreadIdx_x, hipThreadIdx_y);
     // printf("Global Index: %d    \n",  jj*s->nx + ii);
-    if (ii < s->nx && jj < s->ny){
+    if (ii < ni && jj < nj){
         // (i,j)-1/2 face
-        uxl = (ii > 0) ? s->sys_state[jj*nx + ii - 1]   : s->sys_state[jj * nx + ii];
-        uxr =                                             s->sys_state[jj * nx + ii];
-        uyl = (jj > 0) ? s->sys_state[(jj - 1)*nx + ii] : s->sys_state[jj * nx + ii];
-        uyr =                                             s->sys_state[jj * nx + ii];
+        uxl  = (ii > 0) ? s->sys_state[jj * jstride + (ii - 1) * ]   : s->sys_state[jj * nx + ii];
+        uxr  =                                             s->sys_state[jj * nx + ii];
+        uyl  = (jj > 0) ? s->sys_state[(jj - 1)*nx + ii] : s->sys_state[jj * nx + ii];
+        uyr  =                                             s->sys_state[jj * nx + ii];
         pxl  = (ii > 0) ? s->prims[jj*nx + ii - 1]      : s->prims[jj*nx + ii];
         pxr  =                                            s->prims[jj*nx + ii];
         pyl  = (jj > 0) ? s->prims[(jj - 1)*nx + ii]    : s->prims[jj*nx + ii];
@@ -317,7 +328,6 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     const int jstride = s->nx;
     #endif 
 
-    auto null = Conserved{0, 0, 0, 0};
     Conserved uxl, uxr, uyl, uyr, fl, fr, gl, gr,  frf, flf, grf, glf;
     Primitive pxl, pxr, pyl, pyr;
     if (ii < ni && jj < nj){
@@ -325,22 +335,22 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         primitive_buff[tia * bj + tja * bi] = s->prims[gid];
         
         // If I'm at the thread block boundary, load the global neighbor
-        if (tia == 1){
-            primitive_buff[(tia - 1) * bj + tja * bi] =
-                (ii > 0)  ? s->prims[jj * jstride + (ii - 1) * istride] : primitive_buff[tja * bi + tia * bj];
+        // if (tia == 1){
+        //     primitive_buff[(tia - 1) * bj + tja * bi] =
+        //         (ii > 0)  ? s->prims[jj * jstride + (ii - 1) * istride] : primitive_buff[tja * bi + tia * bj];
 
-            primitive_buff[tja * bi + (tia + bi) * bj] = 
-                (ii + bi > ni - 1) ? s->prims[jj * jstride + (ni - 1) * istride]  
-                    : s->prims[jj * jstride + (ii + bi) * istride];
-        }
-        if (tja == 1){
-            primitive_buff[(tja - 1) * bi + tia * bj] =
-                (jj > 0)  ? s->prims[(jj - 1) * jstride + ii * istride] : primitive_buff[tia * bi + tia * bi];
+        //     primitive_buff[tja * bi + (tia + bi) * bj] = 
+        //         (ii + bi > ni - 1) ? s->prims[jj * jstride + (ni - 1) * istride]  
+        //             : s->prims[jj * jstride + (ii + bi) * istride];
+        // }
+        // if (tja == 1){
+        //     primitive_buff[(tja - 1) * bi + tia * bj] =
+        //         (jj > 0)  ? s->prims[(jj - 1) * jstride + ii * istride] : primitive_buff[tia * bi + tia * bi];
 
-            primitive_buff[(tja + bj) * bi + tia * bj] = 
-                (jj + bj > nj - 1) ? s->prims[(nj - 1) * jstride + ii * istride]  
-                    : s->prims[(jj + bj) * jstride + ii * istride];
-        }
+        //     primitive_buff[(tja + bj) * bi + tia * bj] = 
+        //         (jj + bj > nj - 1) ? s->prims[(nj - 1) * jstride + ii * istride]  
+        //             : s->prims[(jj + bj) * jstride + ii * istride];
+        // }
             
         // synchronize threads (maybe)
         __syncthreads();
