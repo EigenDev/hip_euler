@@ -260,47 +260,47 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 
     Conserved uxl, uxr, uyl, uyr, fl, fr, gl, gr,  frf, flf, grf, glf;
     Primitive pxl, pxr, pyl, pyr;
-    // printf("Thread coord: (%d, %d)\n", hipThreadIdx_x, hipThreadIdx_y);
-    // printf("Global Index: %d    \n",  jj*s->nx + ii);
-    if (ii < ni && jj < nj){
-        int gid = s->get_global_idx(ii, jj);
-        // (i,j)-1/2 face
-        uxl  = (ii > 0) ? s->sys_state[jj * jstride + (ii - 1) * istride] : s->sys_state[gid];
-        uxr  = s->sys_state[gid];
-        uyl  = (jj > 0) ? s->sys_state[(jj - 1) * jstride + ii * istride] : s->sys_state[gid];
-        uyr  = s->sys_state[gid];
-        pxl  = (ii > 0) ? s->prims[jj * jstride + (ii - 1) * istride] : s->prims[jj * jstride + ii * istride];
-        pxr  = s->prims[gid];
-        pyl  = (jj > 0) ? s->prims[(jj - 1) * jstride + ii * stride] : s->prims[gid];
-        pyr  = s->prims[gid];                    
-
-        fl  = s->prims2flux(pxl, 1);
-        fr  = s->prims2flux(pxr, 1);
-        gl  = s->prims2flux(pyl, 2);
-        gr  = s->prims2flux(pyr, 2);
-        flf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-        glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
-        
-
-        // i+1/2 face
-        uxl =                                                    s->sys_state[jj * nx + ii];
-        uxr = (ii < nx - 1) ? s->sys_state[jj * nx + (ii + 1)]:  s->sys_state[jj * nx + ii];
-        uyl =                                                    s->sys_state[jj * nx + ii];
-        uyr = (jj < ny - 1) ? s->sys_state[(jj + 1)* nx + ii] : s->sys_state[jj * nx + ii];
-        pxl  =                                                   s->prims[jj*nx + ii];
-        pxr  = (ii < nx - 1) ? s->prims[jj*nx + (ii + 1)]      : s->prims[jj*nx + ii];
-        pyl  =                                                   s->prims[jj*nx + ii];
-        pyr  = (jj < ny - 1) ? s->prims[(jj + 1)*nx + ii]      : s->prims[jj*nx + ii];                      
-
-        fl  = s->prims2flux(pxl, 1);
-        fr  = s->prims2flux(pxr, 1);
-        gl  = s->prims2flux(pyl, 2);
-        gr  = s->prims2flux(pyr, 2);
-        frf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-        grf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
-
-        s->sys_state[jj*nx + ii] -= (frf - flf) / s->dx * dt + (grf - glf) / s->dy * dt ;
+    if (ii >= ni || jj >= nj) {
+        return;
     }
+
+    const int gid = s->get_global_idx(ii, jj);
+    // (i,j)-1/2 face
+    uxl  = (ii > 0) ? s->sys_state[jj * jstride + (ii - 1) * istride] : s->sys_state[gid];
+    uxr  = s->sys_state[gid];
+    uyl  = (jj > 0) ? s->sys_state[(jj - 1) * jstride + ii * istride] : s->sys_state[gid];
+    uyr  = s->sys_state[gid];
+    pxl  = (ii > 0) ? s->prims[jj * jstride + (ii - 1) * istride] : s->prims[jj * jstride + ii * istride];
+    pxr  = s->prims[gid];
+    pyl  = (jj > 0) ? s->prims[(jj - 1) * jstride + ii * stride] : s->prims[gid];
+    pyr  = s->prims[gid];                    
+
+    fl  = s->prims2flux(pxl, 1);
+    fr  = s->prims2flux(pxr, 1);
+    gl  = s->prims2flux(pyl, 2);
+    gr  = s->prims2flux(pyr, 2);
+    flf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+    glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
+    
+
+    // i+1/2 face
+    uxl  = s->sys_state[gid];
+    uxr  = (jj < nj - 1) ? s->sys_state[jj * jstride + (ii + 1) * istride]:  s->sys_state[gid];
+    uyl  = s->sys_state[gid];
+    uyr  = (jj < nj - 1) ? s->sys_state[(jj + 1)* jstride + ii * istride] : s->sys_state[gid];
+    pxl  =  s->prims[gid];
+    pxr  = (ii < ni - 1) ? s->prims[jj * jstride + (ii + 1) * istride] : s->prims[gid];
+    pyl  =  s->prims[gid];
+    pyr  = (jj < nj - 1) ? s->prims[(jj + 1) * jstride + ii * istride] : s->prims[gid];                      
+
+    fl  = s->prims2flux(pxl, 1);
+    fr  = s->prims2flux(pxr, 1);
+    gl  = s->prims2flux(pyl, 2);
+    gr  = s->prims2flux(pyr, 2);
+    frf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+    grf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
+
+    s->sys_state[gid] -= (frf - flf) / s->dx * dt + (grf - glf) / s->dy * dt;
 
 }
 
@@ -464,7 +464,7 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blo
     while (t < tend)
     {
         t1 = high_resolution_clock::now();
-        hipLaunchKernelGGL(shared_gpu_evolve, group_size, block_size, shared_memory, 0, s, dt);
+        hipLaunchKernelGGL(gpu_evolve, group_size, block_size, shared_memory, 0, s, dt);
         hipLaunchKernelGGL(gpu_cons2prim, group_size, block_size, 0, 0, s);
         hipDeviceSynchronize();
         if (n >= nfold){
