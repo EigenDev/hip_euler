@@ -386,7 +386,7 @@ __global__ void hip_euler2d::gpu_cons2prim(SimState *s){
     const int ii  = blockDim.y * blockIdx.y + threadIdx.y;
     const int ni  = s->get_max_i_stride();
     const int nj  = s->get_max_j_stride();
-    const int gid = ii * ny + ii; // s->get_global_idx(ii, jj);
+    const int gid = ii * ni + jj;
     if (ii < ni && jj < nj){
         double rho = s->sys_state[gid].rho;
         double v1  = s->sys_state[gid].m1/rho;
@@ -447,8 +447,8 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int block_size
     while (t < tend)
     {
         t1 = high_resolution_clock::now();
-        hipLaunchKernelGGL(shared_gpu_evolve, dim3(nxBlocks, nyBlocks), dim3(block_size, block_size), 0, 0, s, dt);
-        // hipLaunchKernelGGL(gpu_cons2prim, dim3(nxBlocks, nyBlocks), dim3(block_size, block_size), 0, 0, s);
+        // hipLaunchKernelGGL(shared_gpu_evolve, dim3(nxBlocks, nyBlocks), dim3(block_size, block_size), 0, 0, s, dt);
+        hipLaunchKernelGGL(gpu_cons2prim, dim3(nxBlocks, nyBlocks), dim3(block_size, block_size), 0, 0, s);
         hipDeviceSynchronize();
         if (n >= nfold){
             ncheck += 1;
