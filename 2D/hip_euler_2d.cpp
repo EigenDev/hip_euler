@@ -114,16 +114,16 @@ GPU_CALLABLE_MEMBER void SimState::cons2prim(const Conserved *u)
 
 
 
-// GPU_CALLABLE_MEMBER Conserved SimState::prims2cons(const Primitive &prims)
-// {
-//     double m1 = prims.rho * prims.v1;
-//     double m2 = prims.rho * prims.v2;
-//     double e = 
-//         prims.p/(ADIABATIC_GAMMA - 1.0) + 0.5 * (prims.v1 * prims.v1 + prims.v2 * prims.v2) * prims.rho;
+GPU_CALLABLE_MEMBER Conserved SimState::prims2cons(const Primitive &prims)
+{
+    double m1 = prims.rho * prims.v1;
+    double m2 = prims.rho * prims.v2;
+    double e = 
+        prims.p/(ADIABATIC_GAMMA - 1.0) + 0.5 * (prims.v1 * prims.v1 + prims.v2 * prims.v2) * prims.rho;
 
-//     return Conserved{prims.rho, m1, m2, e};
+    return Conserved{prims.rho, m1, m2, e};
 
-// }//-----End prims2cons for single primitive struct
+}//-----End prims2cons for single primitive struct
 
 GPU_CALLABLE_MEMBER void SimState::prims2cons(const Primitive *prims)
 {
@@ -211,39 +211,39 @@ GPU_CALLABLE_MEMBER Conserved SimState::calc_hll_flux(
 }// End HLL_FLUX
 
 
-// GPU_CALLABLE_MEMBER Conserved SimState::prims2flux(const Primitive &prims, const int nhat)
-// {
-//     double v1 = prims.v1;
-//     double v2 = prims.v2;
-//     double e = 
-//         prims.p/(ADIABATIC_GAMMA - 1.0) + 0.5 * (v1*v1 + v2*v2)* prims.rho;
+GPU_CALLABLE_MEMBER Conserved SimState::prims2flux(const Primitive &prims, const int nhat)
+{
+    double v1 = prims.v1;
+    double v2 = prims.v2;
+    double e = 
+        prims.p/(ADIABATIC_GAMMA - 1.0) + 0.5 * (v1*v1 + v2*v2)* prims.rho;
     
-//     switch (nhat)
-//     {
-//     case 1:
-//         {
-//             double rhof = prims.rho * v1;
-//             double momf = prims.rho * v1 * v1 + prims.p;
-//             double conv = prims.rho*v1*v2;
-//             double engf = (e + prims.p)*v1;
+    switch (nhat)
+    {
+    case 1:
+        {
+            double rhof = prims.rho * v1;
+            double momf = prims.rho * v1 * v1 + prims.p;
+            double conv = prims.rho*v1*v2;
+            double engf = (e + prims.p)*v1;
 
-//             return Conserved{rhof, momf, conv, engf};
-//         }
+            return Conserved{rhof, momf, conv, engf};
+        }
         
     
-//     case 2:
-//         {
-//             double rhof = prims.rho * v2;
-//             double momf = prims.rho * v2 * v2 + prims.p;
-//             double conv = prims.rho*v1*v2;
-//             double engf = (e + prims.p)*v2;
+    case 2:
+        {
+            double rhof = prims.rho * v2;
+            double momf = prims.rho * v2 * v2 + prims.p;
+            double conv = prims.rho*v1*v2;
+            double engf = (e + prims.p)*v2;
 
-//             return Conserved{rhof, conv, momf, engf};
-//         }
+            return Conserved{rhof, conv, momf, engf};
+        }
         
-//     }
+    }
     
-// }// End prims2flux
+}// End prims2flux
 
 
 __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
@@ -345,17 +345,17 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         pyl  = primitive_buff[txa - 1][tya]; 
         pyr  = primitive_buff[txa][tya];        
 
-        uxl  = s->prims2cons(pxl);
-        uxr  = s->prims2cons(pxr);
-        uyl  = s->prims2cons(pyl);
-        uyr  = s->prims2cons(pyr);                         
+        uxl  = null; // s->prims2cons(pxl);
+        uxr  = null; // s->prims2cons(pxr);
+        uyl  = null; // s->prims2cons(pyl);
+        uyr  = null; // s->prims2cons(pyr);                         
 
-        fl  = s->prims2flux(pxl, 1);
-        fr  = s->prims2flux(pxr, 1);
-        gl  = s->prims2flux(pyl, 2);
-        gr  = s->prims2flux(pyr, 2);
-        flf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-        glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
+        fl  = null; // s->prims2flux(pxl, 1);
+        fr  = null; // s->prims2flux(pxr, 1);
+        gl  = null; // s->prims2flux(pyl, 2);
+        gr  = null; // s->prims2flux(pyr, 2);
+        flf = null; // s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+        glf = null; // s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
         
 
         // // i+1/2 face
@@ -364,19 +364,19 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         pyl  = primitive_buff[txa][tya];
         pyr  = primitive_buff[txa + 1][tya];       
 
-        uxl  = s->prims2cons(pxl);
-        uxr  = s->prims2cons(pxr);
-        uyl  = s->prims2cons(pyl);
-        uyr  = s->prims2cons(pyr);     
+        uxl  = null; //s->prims2cons(pxl);
+        uxr  = null; //s->prims2cons(pxr);
+        uyl  = null; //s->prims2cons(pyl);
+        uyr  = null; //s->prims2cons(pyr);     
 
-        fl   = s->prims2flux(pxl, 1);
-        fr   = s->prims2flux(pxr, 1);
-        gl   = s->prims2flux(pyl, 2);
-        gr   = s->prims2flux(pyr, 2);
-        frf  = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-        grf  = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
+        fl   = null; // s->prims2flux(pxl, 1);
+        fr   = null; // s->prims2flux(pxr, 1);
+        gl   = null; // s->prims2flux(pyl, 2);
+        gr   = null; // s->prims2flux(pyr, 2);
+        frf  = null; // s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+        grf  = null; // s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
 
-        s->sys_state[gid] -= ((frf - flf) / s->dx + (grf - glf) / s->dy) * dt ;
+        s->sys_state[gid] -= (frf - flf) / s->dx * dt + (grf - glf) / s->dy * dt ;
     }
 
 }
