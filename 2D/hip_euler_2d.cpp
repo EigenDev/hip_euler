@@ -277,15 +277,16 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
         return;
     }
 
+    const auto null = Conserved{0, 0, 0, 0};
     const int gid = s->get_global_idx(ii, jj);
     // (i,j)-1/2 face
-    uxl  = (ii > 0) ? s->sys_state[jj * jstride + (ii - 1) * istride] : s->sys_state[gid];
+    uxl  = null; // (ii > 0) ? s->sys_state[jj * jstride + (ii - 1) * istride] : s->sys_state[gid];
     uxr  = s->sys_state[gid];
-    uyl  = (jj > 0) ? s->sys_state[(jj - 1) * jstride + ii * istride] : s->sys_state[gid];
+    uyl  = null; // (jj > 0) ? s->sys_state[(jj - 1) * jstride + ii * istride] : s->sys_state[gid];
     uyr  = s->sys_state[gid];
-    pxl  = (ii > 0) ? s->prims[jj * jstride + (ii - 1) * istride] : s->prims[jj * jstride + ii * istride];
+    pxl  = null; // (ii > 0) ? s->prims[jj * jstride + (ii - 1) * istride] : s->prims[jj * jstride + ii * istride];
     pxr  = s->prims[gid];
-    pyl  = (jj > 0) ? s->prims[(jj - 1) * jstride + ii * istride] : s->prims[gid];
+    pyl  = null; // (jj > 0) ? s->prims[(jj - 1) * jstride + ii * istride] : s->prims[gid];
     pyr  = s->prims[gid];                    
 
     fl  = s->prims2flux(pxl, 1);
@@ -298,13 +299,13 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 
     // i+1/2 face
     uxl  = s->sys_state[gid];
-    uxr  = (jj < nj - 1) ? s->sys_state[jj * jstride + (ii + 1) * istride]:  s->sys_state[gid];
+    uxr  = null; // (jj < nj - 1) ? s->sys_state[jj * jstride + (ii + 1) * istride]:  s->sys_state[gid];
     uyl  = s->sys_state[gid];
-    uyr  = (jj < nj - 1) ? s->sys_state[(jj + 1)* jstride + ii * istride] : s->sys_state[gid];
-    pxl  =  s->prims[gid];
-    pxr  = (ii < ni - 1) ? s->prims[jj * jstride + (ii + 1) * istride] : s->prims[gid];
-    pyl  =  s->prims[gid];
-    pyr  = (jj < nj - 1) ? s->prims[(jj + 1) * jstride + ii * istride] : s->prims[gid];                      
+    uyr  = null; // (jj < nj - 1) ? s->sys_state[(jj + 1)* jstride + ii * istride] : s->sys_state[gid];
+    pxl  = s->prims[gid];
+    pxr  = null; // (ii < ni - 1) ? s->prims[jj * jstride + (ii + 1) * istride] : s->prims[gid];
+    pyl  = s->prims[gid];
+    pyr  = null; // (jj < nj - 1) ? s->prims[(jj + 1) * jstride + ii * istride] : s->prims[gid];                      
 
     fl  = s->prims2flux(pxl, 1);
     fr  = s->prims2flux(pxr, 1);
