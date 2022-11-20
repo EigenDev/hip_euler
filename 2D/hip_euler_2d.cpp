@@ -446,7 +446,7 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int block_size
     while (t < tend)
     {
         t1 = high_resolution_clock::now();
-        hipLaunchKernelGGL(shared_gpu_evolve, dim3(nxBlocks, nyBlocks), dim3(block_size, block_size), 0, 0, s, dt);
+        // hipLaunchKernelGGL(shared_gpu_evolve, dim3(nxBlocks, nyBlocks), dim3(block_size, block_size), 0, 0, s, dt);
         hipLaunchKernelGGL(gpu_cons2prim, dim3(nxBlocks, nyBlocks), dim3(block_size, block_size), 0, 0, s);
         hipDeviceSynchronize();
         if (n >= nfold){
