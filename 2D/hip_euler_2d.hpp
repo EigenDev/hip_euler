@@ -130,11 +130,11 @@ namespace hip_euler2d
             const Primitive &right_prims,
             const int nhat);
 
-        GPU_CALLABLE_MEMBER Conserved prims2flux(const Primitive &prims, int nhat);
+        // GPU_CALLABLE_MEMBER Conserved prims2flux(const Primitive &prims, int nhat);
 
         void udot (int nBlocks, int block_size);
 
-        GPU_CALLABLE_MEMBER Conserved SimState::prims2cons(const Primitive &prims) {
+        GPU_CALLABLE_MEMBER Conserved prims2cons(const Primitive &prims) {
             const double m1 = prims.rho * prims.v1;
             const double m2 = prims.rho * prims.v2;
             const double e = 
@@ -144,7 +144,7 @@ namespace hip_euler2d
 
         }//-----End prims2cons for single primitive struct
 
-        GPU_CALLABLE_MEMBER Conserved SimState::prims2flux(const Primitive &prims, const int nhat)
+        GPU_CALLABLE_MEMBER Conserved prims2flux(const Primitive &prims, const int nhat)
         {
             const double v1 = prims.v1;
             const double v2 = prims.v2;
