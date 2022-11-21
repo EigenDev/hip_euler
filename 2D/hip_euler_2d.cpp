@@ -474,32 +474,30 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blo
     while (t < tend)
     {
         t1 = high_resolution_clock::now();
-        #ifdef GLOBAL_EVOLVE
-        gpu_evolve<<<group_size, block_size, 0, 0>>>(s, dt);
-        gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
-        #else
-        shared_gpu_evolve<<<group_size, block_size, shared_memory, 0>>>(s, dt);
-        shared_gpu_cons2prim<<<group_size, block_size, shared_memory, 0>>>(s);
-        #endif 
-        
-        hipDeviceSynchronize();
-        if (n >= nfold){
-            ncheck += 1;
-            t2 = high_resolution_clock::now();
-            delta_t = t2 - t1;
-            zu_avg += nzones / delta_t.count();
-            std::cout << std::fixed << std::setprecision(3) << std::scientific;
-                std::cout << "\r"
-                    << "Iteration: " << std::setw(5) << n 
-                    << "\t"
-                    << "Time: " << std::setw(10) <<  t
-                    << "\t"
-                    << "Zones/sec: "<< nzones / delta_t.count() << std::flush;
-            nfold += 10;
+        for (int i = 0; i < nfold; i++)
+        {
+            #ifdef GLOBAL_EVOLVE
+            gpu_evolve<<<group_size, block_size, 0, 0>>>(s, dt);
+            gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
+            #else
+            shared_gpu_evolve<<<group_size, block_size, shared_memory, 0>>>(s, dt);
+            shared_gpu_cons2prim<<<group_size, block_size, shared_memory, 0>>>(s);
+            #endif 
+            t += dt;
+            n++;
         }
-
-        t += dt;
-        n++;
+        hipDeviceSynchronize();
+        ncheck += 1;
+        t2 = high_resolution_clock::now();
+        delta_t = t2 - t1;
+        zu_avg += nzones / delta_t.count();
+        std::cout << std::fixed << std::setprecision(3) << std::scientific;
+            std::cout << "\r"
+                << "Iteration: " << std::setw(5) << n 
+                << "\t"
+                << "Time: " << std::setw(10) <<  t
+                << "\t"
+                << "Zones/sec: "<< nzones / delta_t.count() << std::flush;
     }
     std::cout << "\n";
     std::cout << "Average zone_updates/sec for: " 
