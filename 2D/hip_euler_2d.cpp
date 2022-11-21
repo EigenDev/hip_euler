@@ -167,7 +167,7 @@ GPU_CALLABLE_MEMBER EigenWave SimState::calc_waves(
     const double pr   = right_prims.p  ;
     const double csl  = sqrt(ADIABATIC_GAMMA * pl / rhol);
     const double csr  = sqrt(ADIABATIC_GAMMA * pr/  rhor);
-    return Conserved{0, 0, 0, 0};
+    return EigenWave{0, 0};
     // switch (nhat)
     // {
     // case 1:
