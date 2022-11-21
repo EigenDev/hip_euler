@@ -279,15 +279,19 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 
     const auto cnull = Conserved{0, 0, 0, 0};
     const auto pnull = Primitive{0, 0, 0, 0};
-    const int gid = s->get_global_idx(ii, jj);
+    const int gid    = s->get_global_idx(ii, jj);
+    const int limface = jj * jstride + (ii - 1 + (ii < 0)) * istride; 
+    const int ljmface = (jj - 1 + (jj < 0)) * jstride + ii * istride; 
+    const int lipface = jj * jstride + (ii + 1 - (ii == ni - 1)) * istride; 
+    const int ljpface = (jj + 1 - (jj == nj - 1)) * jstride + ii * istride;
     // (i,j)-1/2 face
-    uxl  = cnull; // (ii > 0) ? s->sys_state[jj * jstride + (ii - 1) * istride] : s->sys_state[gid];
+    uxl  = s->sys_state[limface];
     uxr  = s->sys_state[gid];
-    uyl  = cnull; // (jj > 0) ? s->sys_state[(jj - 1) * jstride + ii * istride] : s->sys_state[gid];
+    uyl  = s->sys_state[ljmface];
     uyr  = s->sys_state[gid];
-    pxl  = pnull; // (ii > 0) ? s->prims[jj * jstride + (ii - 1) * istride] : s->prims[jj * jstride + ii * istride];
+    pxl  = s->prims[limface];
     pxr  = s->prims[gid];
-    pyl  = pnull; // (jj > 0) ? s->prims[(jj - 1) * jstride + ii * istride] : s->prims[gid];
+    pyl  = s->prims[ljmface];
     pyr  = s->prims[gid];                    
 
     fl  = s->prims2flux(pxl, 1);
@@ -300,13 +304,13 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 
     // i+1/2 face
     uxl  = s->sys_state[gid];
-    uxr  = cnull; // (jj < nj - 1) ? s->sys_state[jj * jstride + (ii + 1) * istride]:  s->sys_state[gid];
+    uxr  = s->sys_state[lipface];
     uyl  = s->sys_state[gid];
-    uyr  = cnull; // (jj < nj - 1) ? s->sys_state[(jj + 1)* jstride + ii * istride] : s->sys_state[gid];
+    uyr  = s->sys_state[ljpface];
     pxl  = s->prims[gid];
-    pxr  = pnull; // (ii < ni - 1) ? s->prims[jj * jstride + (ii + 1) * istride] : s->prims[gid];
+    pxr  = s->prims[lipface];
     pyl  = s->prims[gid];
-    pyr  = pnull; // (jj < nj - 1) ? s->prims[(jj + 1) * jstride + ii * istride] : s->prims[gid];                      
+    pyr  = s->prims[ljpface];                       
 
     fl  = s->prims2flux(pxl, 1);
     fr  = s->prims2flux(pxr, 1);
