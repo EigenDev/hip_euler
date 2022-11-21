@@ -351,24 +351,19 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     if (ii < ni && jj < nj){
         int gid = s->get_global_idx(ii, jj);
         primitive_buff[tia * bj + tja * bi] = s->prims[gid];
-        
+        const int limface = jj * jstride + (ii - 1 + (ii == 0)) * istride; 
+        const int ljmface = (jj - 1 + (jj == 0)) * jstride + ii * istride; 
+        const int lipface = jj * jstride + (ii + ni - (ii + bi >= ni - 1) * ni) * istride; 
+        const int ljpface = (jj + bj - (jj + bj >= nj - 1) * bj) * jstride + ii * istride;
         // If I'm at the thread block boundary, load the global neighbor
-        // if (tia == 1){
-        //     primitive_buff[(tia - 1) * bj + tja * bi] =
-        //         (ii > 0)  ? s->prims[jj * jstride + (ii - 1) * istride] : primitive_buff[tja * bi + tia * bj];
-
-        //     primitive_buff[tja * bi + (tia + bi) * bj] = 
-        //         (ii + bi > ni - 1) ? s->prims[jj * jstride + (ni - 1) * istride]  
-        //             : s->prims[jj * jstride + (ii + bi) * istride];
-        // }
-        // if (tja == 1){
-        //     primitive_buff[(tja - 1) * bi + tia * bj] =
-        //         (jj > 0)  ? s->prims[(jj - 1) * jstride + ii * istride] : primitive_buff[tia * bi + tia * bi];
-
-        //     primitive_buff[(tja + bj) * bi + tia * bj] = 
-        //         (jj + bj > nj - 1) ? s->prims[(nj - 1) * jstride + ii * istride]  
-        //             : s->prims[(jj + bj) * jstride + ii * istride];
-        // }
+        if (tia == 1){
+            primitive_buff[(tia - 1) * bj +(tja + 0)  * bi] = s->prims[limface];
+            primitive_buff[(tja + 0) * bi +(tia + bi) * bj] = s->prims[lipface]; 
+        }
+        if (tja == 1){
+            primitive_buff[(tja - 1) * bi + tia * bj]  = s->prims[ljmface];
+            primitive_buff[(tja + bj) * bi + tia * bj] = s->prims[ljpface];
+        }
             
         // synchronize threads (maybe)
         __syncthreads();
@@ -484,7 +479,7 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blo
     while (t < tend)
     {
         t1 = high_resolution_clock::now();
-        gpu_evolve<<<group_size, block_size, shared_memory, 0>>>(s, dt);
+        shared_gpu_evolve<<<group_size, block_size, shared_memory, 0>>>(s, dt);
         gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
         hipDeviceSynchronize();
         if (n >= nfold){
