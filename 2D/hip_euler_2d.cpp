@@ -342,7 +342,7 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     const int jstride = s->nx;
     #endif 
 
-    if (ii >= s->nx || jj >= s_>ny){
+    if (ii >= s->nx || jj >= s->ny){
         return;
     }
 
