@@ -342,67 +342,69 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     const int jstride = s->nx;
     #endif 
 
+    if (ii >= s->nx || jj >= s_>ny){
+        return;
+    }
+
     Conserved uxl, uxr, uyl, uyr, fl, fr, gl, gr,  frf, flf, grf, glf;
     Primitive pxl, pxr, pyl, pyr;
-    if (ii < s->nx && jj < s->ny){
-        int gid = s->get_global_idx(ii, jj);
-        primitive_buff[tia * bj + tja * bi] = s->prims[gid];
-        // If I'm at the thread block boundary, load the global neighbor
-        if (tia == 1){
-            const int limface = jj * jstride + (ii - 1 + (ii == 0)) * istride; 
-            const int lipface = jj * jstride + (ii + SH_BLOCK_SIZE - (ii + SH_BLOCK_SIZE >= s->nx - 1) * (SH_BLOCK_SIZE + ii + 1 - s->nx)) * istride; 
-            primitive_buff[(tia - 1)  * bj + (tja + 0) * bi] = s->prims[limface];
-            primitive_buff[(tia + SH_BLOCK_SIZE) * bj + (tja + 0) * bi] = s->prims[lipface]; 
-        }
-        if (tja == 1){
-            const int ljmface = (jj - 1 + (jj == 0)) * jstride + ii * istride; 
-            const int ljpface = (jj + SH_BLOCK_SIZE - (jj + SH_BLOCK_SIZE >= s->ny - 1) * (SH_BLOCK_SIZE + jj + 1 - s->ny)) * jstride + ii * istride;
-            primitive_buff[(tja - 1)  * bi + tia * bj] = s->prims[ljmface];
-            primitive_buff[(tja + SH_BLOCK_SIZE) * bi + tia * bj] = s->prims[ljpface];
-        }
-            
-        // synchronize threads (maybe)
-        __syncthreads();
-
-        // (i,j)-1/2 face
-        pxl  = primitive_buff[(tia - 1) * bj + (tja + 0) * bi]; 
-        pxr  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
-        pyl  = primitive_buff[(tia + 0) * bj + (tja - 1) * bi]; 
-        pyr  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];        
-
-        uxl  = s->prims2cons(pxl);
-        uxr  = s->prims2cons(pxr);
-        uyl  = s->prims2cons(pyl);
-        uyr  = s->prims2cons(pyr);                         
-
-        fl  = s->prims2flux(pxl, 1);
-        fr  = s->prims2flux(pxr, 1);
-        gl  = s->prims2flux(pyl, 2);
-        gr  = s->prims2flux(pyr, 2);
-        flf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-        glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
-        
-
-        // // i+1/2 face
-        pxl  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
-        pxr  = primitive_buff[(tia + 1) * bj + (tja + 0) * bi];
-        pyl  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
-        pyr  = primitive_buff[(tia + 0) * bj + (tja + 1) * bi];       
-
-        uxl  = s->prims2cons(pxl);
-        uxr  = s->prims2cons(pxr);
-        uyl  = s->prims2cons(pyl);
-        uyr  = s->prims2cons(pyr);     
-
-        fl   = s->prims2flux(pxl, 1);
-        fr   = s->prims2flux(pxr, 1);
-        gl   = s->prims2flux(pyl, 2);
-        gr   = s->prims2flux(pyr, 2);
-        frf  = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-        grf  = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
-
-        s->sys_state[gid] -= ((frf - flf) / s->dx + (grf - glf) / s->dy) * dt;
+    int gid = s->get_global_idx(ii, jj);
+    primitive_buff[tia * bj + tja * bi] = s->prims[gid];
+    // If I'm at the thread block boundary, load the global neighbor
+    if (tia == 1){
+        const int limface = jj * jstride + (ii - 1 + (ii == 0)) * istride; 
+        const int lipface = jj * jstride + (ii + SH_BLOCK_SIZE - (ii + SH_BLOCK_SIZE >= s->nx - 1) * (SH_BLOCK_SIZE + ii + 1 - s->nx)) * istride; 
+        primitive_buff[(tia - 1)  * bj + (tja + 0) * bi] = s->prims[limface];
+        primitive_buff[(tia + SH_BLOCK_SIZE) * bj + (tja + 0) * bi] = s->prims[lipface]; 
     }
+    if (tja == 1){
+        const int ljmface = (jj - 1 + (jj == 0)) * jstride + ii * istride; 
+        const int ljpface = (jj + SH_BLOCK_SIZE - (jj + SH_BLOCK_SIZE >= s->ny - 1) * (SH_BLOCK_SIZE + jj + 1 - s->ny)) * jstride + ii * istride;
+        primitive_buff[(tja - 1)  * bi + tia * bj] = s->prims[ljmface];
+        primitive_buff[(tja + SH_BLOCK_SIZE) * bi + tia * bj] = s->prims[ljpface];
+    }
+        
+    // synchronize threads (maybe)
+    __syncthreads();
+
+    // (i,j)-1/2 face
+    pxl  = primitive_buff[(tia - 1) * bj + (tja + 0) * bi]; 
+    pxr  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
+    pyl  = primitive_buff[(tia + 0) * bj + (tja - 1) * bi]; 
+    pyr  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];        
+
+    uxl  = s->prims2cons(pxl);
+    uxr  = s->prims2cons(pxr);
+    uyl  = s->prims2cons(pyl);
+    uyr  = s->prims2cons(pyr);                         
+
+    fl  = s->prims2flux(pxl, 1);
+    fr  = s->prims2flux(pxr, 1);
+    gl  = s->prims2flux(pyl, 2);
+    gr  = s->prims2flux(pyr, 2);
+    flf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+    glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
+    
+
+    // // i+1/2 face
+    pxl  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
+    pxr  = primitive_buff[(tia + 1) * bj + (tja + 0) * bi];
+    pyl  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
+    pyr  = primitive_buff[(tia + 0) * bj + (tja + 1) * bi];       
+
+    uxl  = s->prims2cons(pxl);
+    uxr  = s->prims2cons(pxr);
+    uyl  = s->prims2cons(pyl);
+    uyr  = s->prims2cons(pyr);     
+
+    fl   = s->prims2flux(pxl, 1);
+    fr   = s->prims2flux(pxr, 1);
+    gl   = s->prims2flux(pyl, 2);
+    gr   = s->prims2flux(pyr, 2);
+    frf  = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+    grf  = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
+
+    s->sys_state[gid] -= ((frf - flf) / s->dx + (grf - glf) / s->dy) * dt;
 
 }
 
