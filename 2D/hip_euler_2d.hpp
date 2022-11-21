@@ -25,7 +25,6 @@
 // Static const values 
 constexpr double PI = 3.14159265358979323846;
 constexpr double ADIABATIC_GAMMA = 5.0/3.0;
-constexpr double INVERSE_GAMMA_MINUS_1 = 1.0 / (ADIABATIC_GAMMA - 1);
 constexpr int SH_BLOCK_SIZE = 32;
 constexpr auto bz = SH_BLOCK_SIZE + 2;
 constexpr auto bi = []() {

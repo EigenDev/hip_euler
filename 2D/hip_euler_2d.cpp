@@ -133,7 +133,7 @@ GPU_CALLABLE_MEMBER Conserved SimState::prims2cons(const Primitive &prims)
     const double v1  = prims.v1;
     const double v2  = prims.v2;
     const double p   = prims.p;
-    const double e =  p * INVERSE_GAMMA_MINUS_1 + 0.5 * (v1 * v1 + v2 * v2) * rho;
+    const double e =  p  / (ADIABATIC_GAMMA - 1) + 0.5 * (v1 * v1 + v2 * v2) * rho;
     return Conserved{rho, rho * v1, rho * v2, e};
     // const double m1 = prims.rho * prims.v1;
     // const double m2 = prims.rho * prims.v2;
