@@ -428,7 +428,7 @@ __global__ void hip_euler2d::gpu_cons2prim(SimState *s){
 }
 
 __global__ void hip_euler2d::shared_gpu_cons2prim(SimState *s){
-    __shared__ Conserved  conserved_buff[];
+    extern __shared__ Conserved  conserved_buff[];
     const int jj  = blockDim.x * blockIdx.x + threadIdx.x;
     const int ii  = blockDim.y * blockIdx.y + threadIdx.y;
     const int ni  = s->get_max_i_stride();
