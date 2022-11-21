@@ -27,7 +27,7 @@ constexpr double PI = 3.14159265358979323846;
 constexpr double ADIABATIC_GAMMA = 5.0/3.0;
 constexpr int SH_BLOCK_SIZE = 8;
 constexpr auto bz = SH_BLOCK_SIZE + 2;
-constexpr auto bi = [&]() {
+constexpr auto bi = []() {
     #ifdef __HIPC__
     return 1;
     #else
@@ -35,7 +35,7 @@ constexpr auto bi = [&]() {
     #endif
 }();
 
-constexpr auto bj = [&]() {
+constexpr auto bj = []() {
     #ifdef __HIPC__
     return SH_BLOCK_SIZE + 2;
     #else
