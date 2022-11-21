@@ -348,18 +348,18 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         int gid = s->get_global_idx(ii, jj);
         primitive_buff[tia * bj + tja * bi] = s->prims[gid];
         // If I'm at the thread block boundary, load the global neighbor
-        if (tia == 1){
-            const int limface = jj * jstride + (ii - 1 + (ii == 0)) * istride; 
-            const int lipface = jj * jstride + (ii + SH_BLOCK_SIZE - (ii + SH_BLOCK_SIZE >= s->nx - 1) * (SH_BLOCK_SIZE + ii + 1 - s->nx)) * istride; 
-            primitive_buff[(tia - 1)  * bj + (tja + 0) * bi] = s->prims[limface];
-            primitive_buff[(tia + SH_BLOCK_SIZE) * bj + (tja + 0) * bi] = s->prims[lipface]; 
-        }
-        if (tja == 1){
-            const int ljmface = (jj - 1 + (jj == 0)) * jstride + ii * istride; 
-            const int ljpface = (jj + SH_BLOCK_SIZE - (jj + SH_BLOCK_SIZE >= s->ny - 1) * (SH_BLOCK_SIZE + jj + 1 - s->ny)) * jstride + ii * istride;
-            primitive_buff[(tja - 1)  * bi + tia * bj] = s->prims[ljmface];
-            primitive_buff[(tja + SH_BLOCK_SIZE) * bi + tia * bj] = s->prims[ljpface];
-        }
+        // if (tia == 1){
+        //     const int limface = jj * jstride + (ii - 1 + (ii == 0)) * istride; 
+        //     const int lipface = jj * jstride + (ii + SH_BLOCK_SIZE - (ii + SH_BLOCK_SIZE >= s->nx - 1) * (SH_BLOCK_SIZE + ii + 1 - s->nx)) * istride; 
+        //     primitive_buff[(tia - 1)  * bj + (tja + 0) * bi] = s->prims[limface];
+        //     primitive_buff[(tia + SH_BLOCK_SIZE) * bj + (tja + 0) * bi] = s->prims[lipface]; 
+        // }
+        // if (tja == 1){
+        //     const int ljmface = (jj - 1 + (jj == 0)) * jstride + ii * istride; 
+        //     const int ljpface = (jj + SH_BLOCK_SIZE - (jj + SH_BLOCK_SIZE >= s->ny - 1) * (SH_BLOCK_SIZE + jj + 1 - s->ny)) * jstride + ii * istride;
+        //     primitive_buff[(tja - 1)  * bi + tia * bj] = s->prims[ljmface];
+        //     primitive_buff[(tja + SH_BLOCK_SIZE) * bi + tia * bj] = s->prims[ljpface];
+        // }
             
         // synchronize threads (maybe)
         __syncthreads();
