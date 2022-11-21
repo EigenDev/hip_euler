@@ -83,7 +83,7 @@ namespace hip_euler2d
         GPU_CALLABLE_MEMBER Primitive operator*(const double c) const { return Primitive{rho * c, v1 * c, v2 * c, p * c}; }
         GPU_CALLABLE_MEMBER Primitive operator/(const double c) const { return Primitive{rho / c, v1 / c, v2 / c, p / c}; }
 
-        GPU_CALLABLE_MEMBER constexpr double vcomponent(int nhat) { return (nhat == 1 ? v1 : v2)};
+        GPU_CALLABLE_MEMBER constexpr double vcomponent(int nhat) const { return (nhat == 1 ? v1 : v2);};
 
     }; //---------End Primitive
 
