@@ -298,8 +298,8 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
     fr  = cnull; // s->prims2flux(pxr, 1);
     gl  = cnull; // s->prims2flux(pyl, 2);
     gr  = cnull; // s->prims2flux(pyr, 2);
-    flf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-    glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
+    flf = cnull; // s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+    glf = cnull; // s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
     
 
     // i+1/2 face
@@ -316,8 +316,8 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
     fr  = cnull; // s->prims2flux(pxr, 1);
     gl  = cnull; // s->prims2flux(pyl, 2);
     gr  = cnull; // s->prims2flux(pyr, 2);
-    frf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-    grf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
+    frf = cnull; // s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+    grf = cnull; // s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
 
     s->sys_state[gid] -= (frf - flf) / s->dx * dt + (grf - glf) / s->dy * dt;
 
