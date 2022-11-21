@@ -379,8 +379,6 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     const Conserved grf  = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
 
     s->sys_state[gid] -= ((frf - flf) / s->dx + (grf - glf) / s->dy) * dt;
-    s->prims[gid]      = s->cons2prim(s->sys_state[gid]);
-
 }
 
 __global__ void hip_euler2d::gpu_cons2prim(SimState *s){
@@ -456,7 +454,7 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blo
             gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
             #else
             shared_gpu_evolve<<<group_size, block_size, shared_memory, 0>>>(s, dt);
-            // gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
+            gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
             // shared_gpu_cons2prim<<<group_size, block_size, shared_memory, 0>>>(s);
             #endif 
             t += dt;
