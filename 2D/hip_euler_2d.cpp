@@ -487,17 +487,17 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blo
             n++;
         }
         hipDeviceSynchronize();
-        ncheck += 1;
         t2 = high_resolution_clock::now();
+        ncheck += 1;
         delta_t = t2 - t1;
-        zu_avg += nzones / delta_t.count();
+        zu_avg += nzones * nfold / delta_t.count();
         std::cout << std::fixed << std::setprecision(3) << std::scientific;
             std::cout << "\r"
                 << "Iteration: " << std::setw(5) << n 
                 << "\t"
                 << "Time: " << std::setw(10) <<  t
                 << "\t"
-                << "Zones/sec: "<< nzones / delta_t.count() << std::flush;
+                << "Zones/sec: "<< nzones * nfold / delta_t.count() << std::flush;
     }
     std::cout << "\n";
     std::cout << "Average zone_updates/sec for: " 
