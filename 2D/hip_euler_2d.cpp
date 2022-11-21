@@ -129,12 +129,13 @@ GPU_CALLABLE_MEMBER void SimState::cons2prim(const Conserved *u)
 
 GPU_CALLABLE_MEMBER Conserved SimState::prims2cons(const Primitive &prims)
 {
-    const double m1 = prims.rho * prims.v1;
-    const double m2 = prims.rho * prims.v2;
-    const double e = 
-        prims.p/(ADIABATIC_GAMMA - 1.0) + 0.5 * (prims.v1 * prims.v1 + prims.v2 * prims.v2) * prims.rho;
+    return Conserved{0, 0, 0, 0};
+    // const double m1 = prims.rho * prims.v1;
+    // const double m2 = prims.rho * prims.v2;
+    // const double e = 
+    //     prims.p/(ADIABATIC_GAMMA - 1.0) + 0.5 * (prims.v1 * prims.v1 + prims.v2 * prims.v2) * prims.rho;
 
-    return Conserved{prims.rho, m1, m2, e};
+    // return Conserved{prims.rho, m1, m2, e};
 
 }//-----End prims2cons for single primitive struct
 
@@ -223,33 +224,31 @@ GPU_CALLABLE_MEMBER Conserved SimState::calc_hll_flux(
 
 GPU_CALLABLE_MEMBER Conserved SimState::prims2flux(const Primitive &prims, const int nhat)
 {
-    const double v1 = prims.v1;
-    const double v2 = prims.v2;
-    const double e = prims.p/(ADIABATIC_GAMMA - 1.0) + 0.5 * (v1*v1 + v2*v2)* prims.rho;
-    switch (nhat)
-    {
-    case 1:
-        {
-            double rhof = prims.rho * v1;
-            double momf = prims.rho * v1 * v1 + prims.p;
-            double conv = prims.rho*v1*v2;
-            double engf = (e + prims.p)*v1;
+    return Conserved{0, 0, 0, 0};
+    // const double v1 = prims.v1;
+    // const double v2 = prims.v2;
+    // const double e = prims.p/(ADIABATIC_GAMMA - 1.0) + 0.5 * (v1*v1 + v2*v2)* prims.rho;
+    // switch (nhat)
+    // {
+    // case 1:
+    //     {
+    //         double rhof = prims.rho * v1;
+    //         double momf = prims.rho * v1 * v1 + prims.p;
+    //         double conv = prims.rho*v1*v2;
+    //         double engf = (e + prims.p)*v1;
 
-            return Conserved{rhof, momf, conv, engf};
-        }
-        
-    
-    case 2:
-        {
-            double rhof = prims.rho * v2;
-            double momf = prims.rho * v2 * v2 + prims.p;
-            double conv = prims.rho*v1*v2;
-            double engf = (e + prims.p)*v2;
+    //         return Conserved{rhof, momf, conv, engf};
+    //     }
+    // case 2:
+    //     {
+    //         double rhof = prims.rho * v2;
+    //         double momf = prims.rho * v2 * v2 + prims.p;
+    //         double conv = prims.rho*v1*v2;
+    //         double engf = (e + prims.p)*v2;
 
-            return Conserved{rhof, conv, momf, engf};
-        }
-        
-    }
+    //         return Conserved{rhof, conv, momf, engf};
+    //     }
+    // }
     
 }// End prims2flux
 
