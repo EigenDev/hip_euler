@@ -230,31 +230,26 @@ GPU_CALLABLE_MEMBER Conserved SimState::prims2flux(const Primitive &prims, const
     const double v2  = prims.v2;
     const double p   = prims.p;
     const double e   = p / (ADIABATIC_GAMMA - 1.0) + 0.5 * (v1*v1 + v2*v2) * rho;
-    return Conserved{0, 0, 0, 0};
-    // const double v1 = prims.v1;
-    // const double v2 = prims.v2;
-    // const double e = prims.p/(ADIABATIC_GAMMA - 1.0) + 0.5 * (v1*v1 + v2*v2)* prims.rho;
-    // switch (nhat)
-    // {
-    // case 1:
-    //     {
-    //         double rhof = prims.rho * v1;
-    //         double momf = prims.rho * v1 * v1 + prims.p;
-    //         double conv = prims.rho*v1*v2;
-    //         double engf = (e + prims.p)*v1;
 
-    //         return Conserved{rhof, momf, conv, engf};
-    //     }
-    // case 2:
-    //     {
-    //         double rhof = prims.rho * v2;
-    //         double momf = prims.rho * v2 * v2 + prims.p;
-    //         double conv = prims.rho*v1*v2;
-    //         double engf = (e + prims.p)*v2;
-
-    //         return Conserved{rhof, conv, momf, engf};
-    //     }
-    // }
+    switch (nhat)
+    {
+    case 1:
+        {
+            const double rhof = rho * v1;
+            const double momf = rho * v1 * v1 + p;
+            const double conv = rho * v1 * v2;
+            const double engf = (e + p) * v1;
+            return Conserved{rhof, momf, conv, engf};
+        }
+    case 2:
+        {
+            const double rhof = rho * v2;
+            const double momf = rho * v2 * v2 + prims.p;
+            const double conv = rho * v1 * v2;
+            const double engf = (e + p) * v2;
+            return Conserved{rhof, conv, momf, engf};
+        }
+    }
     
 }// End prims2flux
 
