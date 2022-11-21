@@ -280,8 +280,8 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
     const auto cnull = Conserved{0, 0, 0, 0};
     const auto pnull = Primitive{0, 0, 0, 0};
     const int gid    = s->get_global_idx(ii, jj);
-    const int limface = jj * jstride + (ii - 1 + (ii < 0)) * istride; 
-    const int ljmface = (jj - 1 + (jj < 0)) * jstride + ii * istride; 
+    const int limface = jj * jstride + (ii - 1 + (ii == 0)) * istride; 
+    const int ljmface = (jj - 1 + (jj == 0)) * jstride + ii * istride; 
     const int lipface = jj * jstride + (ii + 1 - (ii == ni - 1)) * istride; 
     const int ljpface = (jj + 1 - (jj == nj - 1)) * jstride + ii * istride;
     // (i,j)-1/2 face
