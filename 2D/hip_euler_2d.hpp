@@ -133,7 +133,7 @@ namespace hip_euler2d
 
         // Convert from the conservarive array to primitive and cache it
         GPU_CALLABLE_MEMBER void cons2prim(const Conserved *u_state);
-        GPU_CALLABLE_MEMBER Conserved cons2prim(const Conserved &u);
+        GPU_CALLABLE_MEMBER Primitive cons2prim(const Conserved &u);
 
         GPU_CALLABLE_MEMBER Conserved prims2cons(const Primitive &prims);
 

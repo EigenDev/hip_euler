@@ -94,7 +94,7 @@ SimState::~SimState(){
     free(prims);
 };
 
-GPU_CALLABLE_MEMBER void SimState::cons2prim(const Conserved &u)
+GPU_CALLABLE_MEMBER Primitive SimState::cons2prim(const Conserved &u)
 {   
     const double rho = u.rho;
     const double v1  = u.m1 / rho;
