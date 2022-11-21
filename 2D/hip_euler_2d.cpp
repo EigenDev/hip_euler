@@ -64,8 +64,6 @@ void SimState::initializeModel(
     double radius = sqrt( (xmax - xmin) * (xmax - xmin) + (ymax - ymin) * (ymax - ymin));
     // Allocate array of conservatives
     sys_state = (Conserved*) malloc(nx * ny * sizeof(Conserved));
-    // u1        = (Conserved*) malloc(numzones * sizeof(Conserved));
-    // du_dt     = (Conserved*) malloc(numzones * sizeof(Conserved));
     prims     = (Primitive*) malloc(nx * ny * sizeof(Primitive));
 
     for (int jj = 0; jj < ny; jj++)
@@ -93,8 +91,6 @@ void SimState::initializeModel(
 
 SimState::~SimState(){
     free(sys_state);
-    // free(u1);
-    // free(du_dt);
     free(prims);
 };
 
@@ -233,6 +229,7 @@ GPU_CALLABLE_MEMBER Conserved SimState::prims2flux(const Primitive &prims, const
     const double v1  = prims.v1;
     const double v2  = prims.v2;
     const double p   = prims.p;
+    const double e   = p / (ADIABATIC_GAMMA - 1.0) + 0.5 * (v1*v1 + v2*v2) * rho;
     return Conserved{0, 0, 0, 0};
     // const double v1 = prims.v1;
     // const double v2 = prims.v2;
