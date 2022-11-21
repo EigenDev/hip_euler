@@ -326,8 +326,6 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 
 __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
 {
-    constexpr auto bi = SH_BLOCK_SIZE + 2;
-    constexpr auto bj = SH_BLOCK_SIZE + 2;
     extern __shared__ Primitive primitive_buff[];
     int jj  = blockDim.x * blockIdx.x + threadIdx.x;
     int ii  = blockDim.y * blockIdx.y + threadIdx.y;
@@ -353,8 +351,8 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         primitive_buff[tia * bj + tja * bi] = s->prims[gid];
         const int limface = jj * jstride + (ii - 1 + (ii == 0)) * istride; 
         const int ljmface = (jj - 1 + (jj == 0)) * jstride + ii * istride; 
-        const int lipface = jj * jstride + (ii + bi - (ii + bi >= ni - 1) * (bi + ii + 1 - s->nx)) * istride; 
-        const int ljpface = (jj + bj - (jj + bj >= nj - 1) * (bj + jj + 1 - s->ny)) * jstride + ii * istride;
+        const int lipface = jj * jstride + (ii + SH_BLOCK_SIZE - (ii + SH_BLOCK_SIZE >= ni - 1) * (SH_BLOCK_SIZE + ii + 1 - s->nx)) * istride; 
+        const int ljpface = (jj + SH_BLOCK_SIZE - (jj + SH_BLOCK_SIZE >= nj - 1) * (SH_BLOCK_SIZE + jj + 1 - s->ny)) * jstride + ii * istride;
         // If I'm at the thread block boundary, load the global neighbor
         if (tia == 1){
             primitive_buff[(tia - 1)  * bj + (tja + 0) * bi] = s->prims[limface];
@@ -369,9 +367,9 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         __syncthreads();
 
         // (i,j)-1/2 face
-        pxl  = primitive_buff[(tia + 0) * bj + (tja - 1) * bi]; 
+        pxl  = primitive_buff[(tia - 1) * bj + (tja + 0) * bi]; 
         pxr  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
-        pyl  = primitive_buff[(tia - 1) * bj + (tja + 0) * bi]; 
+        pyl  = primitive_buff[(tia + 0) * bj + (tja - 1) * bi]; 
         pyr  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];        
 
         uxl  = s->prims2cons(pxl);
@@ -389,9 +387,9 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
 
         // // i+1/2 face
         pxl  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
-        pxr  = primitive_buff[(tia + 0) * bj + (tja + 1) * bi];
+        pxr  = primitive_buff[(tia + 1) * bj + (tja + 0) * bi];
         pyl  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
-        pyr  = primitive_buff[(tia + 1) * bj + (tja + 0) * bi];       
+        pyr  = primitive_buff[(tia + 0) * bj + (tja + 1) * bi];       
 
         uxl  = s->prims2cons(pxl);
         uxr  = s->prims2cons(pxr);
