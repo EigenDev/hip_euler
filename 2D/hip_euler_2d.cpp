@@ -326,8 +326,8 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 
 __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
 {
-    constexpr auto bi = SH_BLOCK_SIZE;
-    constexpr auto bj = SH_BLOCK_SIZE;
+    constexpr auto bi = SH_BLOCK_SIZE + 2;
+    constexpr auto bj = SH_BLOCK_SIZE + 2;
     extern __shared__ Primitive primitive_buff[];
     int jj  = blockDim.x * blockIdx.x + threadIdx.x;
     int ii  = blockDim.y * blockIdx.y + threadIdx.y;
