@@ -347,16 +347,16 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     if (ii < s->nx && jj < s->ny){
         int gid = s->get_global_idx(ii, jj);
         primitive_buff[tia * bj + tja * bi] = s->prims[gid];
-        const int limface = jj * jstride + (ii - 1 + (ii == 0)) * istride; 
-        const int ljmface = (jj - 1 + (jj == 0)) * jstride + ii * istride; 
-        const int lipface = jj * jstride + (ii + SH_BLOCK_SIZE - (ii + SH_BLOCK_SIZE >= s->nx - 1) * (SH_BLOCK_SIZE + ii + 1 - s->nx)) * istride; 
-        const int ljpface = (jj + SH_BLOCK_SIZE - (jj + SH_BLOCK_SIZE >= s->ny - 1) * (SH_BLOCK_SIZE + jj + 1 - s->ny)) * jstride + ii * istride;
         // If I'm at the thread block boundary, load the global neighbor
         if (tia == 1){
+            const int limface = jj * jstride + (ii - 1 + (ii == 0)) * istride; 
+            const int lipface = jj * jstride + (ii + SH_BLOCK_SIZE - (ii + SH_BLOCK_SIZE >= s->nx - 1) * (SH_BLOCK_SIZE + ii + 1 - s->nx)) * istride; 
             primitive_buff[(tia - 1)  * bj + (tja + 0) * bi] = s->prims[limface];
             primitive_buff[(tia + SH_BLOCK_SIZE) * bj + (tja + 0) * bi] = s->prims[lipface]; 
         }
         if (tja == 1){
+            const int ljmface = (jj - 1 + (jj == 0)) * jstride + ii * istride; 
+            const int ljpface = (jj + SH_BLOCK_SIZE - (jj + SH_BLOCK_SIZE >= s->ny - 1) * (SH_BLOCK_SIZE + jj + 1 - s->ny)) * jstride + ii * istride;
             primitive_buff[(tja - 1)  * bi + tia * bj] = s->prims[ljmface];
             primitive_buff[(tja + SH_BLOCK_SIZE) * bi + tia * bj] = s->prims[ljpface];
         }
@@ -472,7 +472,7 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blo
     dim3 group_size = dim3(nxBlocks, nyBlocks, 1);
     dim3 block_size = dim3(shared_blocks, shared_blocks, 1);
     int shared_memory = (block_size.x + 2) * (block_size.y + 2) * sizeof(Primitive);
-    std::cout << "nzones: " <<  nzones << "\n";
+    std::cout << "nzones: " << nzones << "\n";
     while (t < tend)
     {
         t1 = high_resolution_clock::now();

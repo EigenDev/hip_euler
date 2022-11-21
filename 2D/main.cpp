@@ -44,7 +44,7 @@ int main(int argc, char ** argv)
     int nxBlocks = (nx + BLOCK_SIZE - 1) / BLOCK_SIZE;
     int nyBlocks = (ny + BLOCK_SIZE - 1) / BLOCK_SIZE;
     double tend = 0.1;
-    double dt = dx * 0.001;
+    double dt = dx * 0.05;
 
     // Evolve it 
     evolve(d_sim, nxBlocks, nyBlocks, BLOCK_SIZE, nx*ny, tend, dt);
