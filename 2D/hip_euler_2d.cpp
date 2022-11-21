@@ -351,8 +351,8 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         primitive_buff[tia * bj + tja * bi] = s->prims[gid];
         const int limface = jj * jstride + (ii - 1 + (ii == 0)) * istride; 
         const int ljmface = (jj - 1 + (jj == 0)) * jstride + ii * istride; 
-        const int lipface = jj * jstride + (ii + SH_BLOCK_SIZE - (ii + SH_BLOCK_SIZE >= ni - 1) * (SH_BLOCK_SIZE + ii + 1 - s->nx)) * istride; 
-        const int ljpface = (jj + SH_BLOCK_SIZE - (jj + SH_BLOCK_SIZE >= nj - 1) * (SH_BLOCK_SIZE + jj + 1 - s->ny)) * jstride + ii * istride;
+        const int lipface = jj * jstride + (ii + SH_BLOCK_SIZE - (ii + SH_BLOCK_SIZE >= s->nx - 1) * (SH_BLOCK_SIZE + ii + 1 - s->nx)) * istride; 
+        const int ljpface = (jj + SH_BLOCK_SIZE - (jj + SH_BLOCK_SIZE >= s->ny - 1) * (SH_BLOCK_SIZE + jj + 1 - s->ny)) * jstride + ii * istride;
         // If I'm at the thread block boundary, load the global neighbor
         if (tia == 1){
             primitive_buff[(tia - 1)  * bj + (tja + 0) * bi] = s->prims[limface];
