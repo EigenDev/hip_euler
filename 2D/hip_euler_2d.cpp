@@ -331,8 +331,8 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     int ii  = blockDim.y * blockIdx.y + threadIdx.y;
     int tj  = threadIdx.x;
     int ti  = threadIdx.y;
-    int tja = threadIdx.x + 1;
-    int tia = threadIdx.y + 1;
+    int tja = tj + 1;
+    int tia = ti + 1;
     int ni  = s->get_max_i_stride();
     int nj  = s->get_max_j_stride();
 
@@ -356,11 +356,11 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
         // If I'm at the thread block boundary, load the global neighbor
         if (tia == 1){
             primitive_buff[(tia - 1)  * bj + (tja + 0) * bi] = s->prims[limface];
-            primitive_buff[(tia + bi) * bj + (tja + 0) * bi] = s->prims[lipface]; 
+            primitive_buff[(tia + SH_BLOCK_SIZE) * bj + (tja + 0) * bi] = s->prims[lipface]; 
         }
         if (tja == 1){
-            primitive_buff[(tja - 1) * bi + tia * bj]  = s->prims[ljmface];
-            primitive_buff[(tja + bj) * bi + tia * bj] = s->prims[ljpface];
+            primitive_buff[(tja - 1)  * bi + tia * bj] = s->prims[ljmface];
+            primitive_buff[(tja + SH_BLOCK_SIZE) * bi + tia * bj] = s->prims[ljpface];
         }
             
         // synchronize threads (maybe)
