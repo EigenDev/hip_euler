@@ -23,7 +23,7 @@ endif
 CXX=${HIPCC}
 CXXFLAGS = -std=c++17 -I. -I/public/apps/hdf5/1.12.0/gcc.7.3.1/include -O3 -march=native
 EXTRAFLAGS := 
-CXXFLAGs:=$(CXXFLAGS) $(EXTRAFLAGS)
+CXXFLAGS:=$(CXXFLAGS) $(EXTRAFLAGS)
 LDFLAGS = -lhdf5 -lhdf5_cpp
 LD_LIBRARY_PATH := /public/apps/hdf5/1.12.0/gcc.7.3.1/lib
 LIBS=-L$(LD_LIBRARY_PATH) $(LDFLAGS)
