@@ -129,15 +129,8 @@ GPU_CALLABLE_MEMBER Conserved SimState::prims2cons(const Primitive &prims)
     const double v1  = prims.v1;
     const double v2  = prims.v2;
     const double p   = prims.p;
-    const double e =  p  / (ADIABATIC_GAMMA - 1) + 0.5 * (v1 * v1 + v2 * v2) * rho;
+    const double e   =  p  / (ADIABATIC_GAMMA - 1) + 0.5 * (v1 * v1 + v2 * v2) * rho;
     return Conserved{rho, rho * v1, rho * v2, e};
-    // const double m1 = prims.rho * prims.v1;
-    // const double m2 = prims.rho * prims.v2;
-    // const double e = 
-    //     prims.p/(ADIABATIC_GAMMA - 1.0) + 0.5 * (prims.v1 * prims.v1 + prims.v2 * prims.v2) * prims.rho;
-
-    // return Conserved{prims.rho, m1, m2, e};
-
 }//-----End prims2cons for single primitive struct
 
 GPU_CALLABLE_MEMBER void SimState::prims2cons(const Primitive *prims)
@@ -174,31 +167,30 @@ GPU_CALLABLE_MEMBER EigenWave SimState::calc_waves(
     const double pr   = right_prims.p  ;
     const double csl  = sqrt(ADIABATIC_GAMMA * pl / rhol);
     const double csr  = sqrt(ADIABATIC_GAMMA * pr/  rhor);
-    switch (nhat)
-    {
-    case 1:
-        {
-            const double vr  = right_prims.v1;
-            const double vl  = left_prims.v1;
-            const double aL   = min(vl - csl, vr - csr);
-            const double aR   = max(vr + csr, vl + csl);
+    return Conserved{0, 0, 0, 0};
+    // switch (nhat)
+    // {
+    // case 1:
+    //     {
+    //         const double vr  = right_prims.v1;
+    //         const double vl  = left_prims.v1;
+    //         const double aL   = min(vl - csl, vr - csr);
+    //         const double aR   = max(vr + csr, vl + csl);
 
-            return EigenWave(aL, aR);
-        }
+    //         return EigenWave(aL, aR);
+    //     }
     
-    case 2:
-        {
-            const double vr  = right_prims.v2;
-            const double vl  = left_prims.v2;
-            const double aL   = min(vl - csl, vr - csr);
-            const double aR   = max(vr + csr, vl + csl);
+    // case 2:
+    //     {
+    //         const double vr  = right_prims.v2;
+    //         const double vl  = left_prims.v2;
+    //         const double aL   = min(vl - csl, vr - csr);
+    //         const double aR   = max(vr + csr, vl + csl);
 
-            return EigenWave(aL, aR);
-        }
+    //         return EigenWave(aL, aR);
+    //     }
         
-    }
-    
-
+    // }
 }//-------End calc_waves
 
 
