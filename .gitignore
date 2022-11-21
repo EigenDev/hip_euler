@@ -3,3 +3,6 @@ gpuEuler
 .vscode
 *.h5
 *.png
+*.csv
+*.txt
+*.xml

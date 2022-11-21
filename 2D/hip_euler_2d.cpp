@@ -428,32 +428,28 @@ __global__ void hip_euler2d::gpu_cons2prim(SimState *s){
 }
 
 __global__ void hip_euler2d::shared_gpu_cons2prim(SimState *s){
-    __shared__ Conserved  conserved_buff[SH_BLOCK_SIZE][SH_BLOCK_SIZE];
-    __shared__ Primitive  primitive_buff[SH_BLOCK_SIZE][SH_BLOCK_SIZE];
-
-    int ii = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int jj = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    int tx = threadIdx.x;
-    int ty = threadIdx.y;
-    int wx = hipBlockDim_x;
-    int wy = hipBlockDim_y;
-
-    int nx = s->nx;
-    int ny = s->ny;
+    __shared__ Conserved  conserved_buff[];
+    const int jj  = blockDim.x * blockIdx.x + threadIdx.x;
+    const int ii  = blockDim.y * blockIdx.y + threadIdx.y;
+    const int ni  = s->get_max_i_stride();
+    const int nj  = s->get_max_j_stride();
+    const int gid = s->get_global_idx(ii, jj);
+    const int tj  = threadIdx.x;
+    const int ti  = threadIdx.y;
+    const int tid = tj * bi + ti * bj;
+    const int nx  = s->nx;
+    const int ny  = s->ny;
 
     // printf("%d, %d\n", jj, ii);
-    if (ii < nx && jj < ny){
-        int gid = jj*nx + ii;
-
+    if (ii < s->nx && jj < s->ny){
         // load shared memory
-        conserved_buff[ty][tx] = s->sys_state[gid];
-        primitive_buff[ty][tx] = s->prims[gid];
-        double rho = conserved_buff[ty][tx].rho;
-        double v1  = conserved_buff[ty][tx].m1/rho;
-        double v2  = conserved_buff[ty][tx].m2/rho;
+        conserved_buff[tid] = s->sys_state[gid];
+        double rho = conserved_buff[tid].rho;
+        double v1  = conserved_buff[tid].m1 / rho;
+        double v2  = conserved_buff[tid].m2 / rho;
 
         double p = 
-            (ADIABATIC_GAMMA - 1.0) * (conserved_buff[ty][tx].energy 
+            (ADIABATIC_GAMMA - 1.0) * (conserved_buff[tid].energy 
                 - 0.5 * rho * (v1 * v1 + v2*v2));
 
         // Write back to global
@@ -480,10 +476,12 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blo
         t1 = high_resolution_clock::now();
         #ifdef GLOBAL_EVOLVE
         gpu_evolve<<<group_size, block_size, 0, 0>>>(s, dt);
+        gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
         #else
         shared_gpu_evolve<<<group_size, block_size, shared_memory, 0>>>(s, dt);
+        shared_gpu_cons2prim<<<group_size, block_size, shared_memory, 0>>>(s);
         #endif 
-        gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
+        
         hipDeviceSynchronize();
         if (n >= nfold){
             ncheck += 1;
@@ -524,10 +522,7 @@ void SimDualSpace::copyStateToGPU(
 
     //--------Allocate the memory for pointer objects-------------------------
     hipMalloc((void **)&host_u0,     nx * ny * sizeof(Conserved));
-    // hipMalloc((void **)&host_u1,     nz * sizeof(Conserved));
-    // hipMalloc((void **)&host_dudt,   nz * sizeof(Conserved));
     hipMalloc((void **)&host_prims,  nx * ny * sizeof(Primitive));
-    // hipMalloc((void **)&u0        , sizeof(Conserved));
 
     //--------Copy the host resources to pointer variables on host
     hipMemcpy(host_u0,    host.sys_state, nx * ny * sizeof(Conserved), hipMemcpyHostToDevice);
