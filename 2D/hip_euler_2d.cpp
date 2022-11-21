@@ -273,7 +273,7 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
 
     Conserved uxl, uxr, uyl, uyr, fl, fr, gl, gr,  frf, flf, grf, glf;
     Primitive pxl, pxr, pyl, pyr;
-    if (ii >= ni || jj >= nj) {
+    if (ii >= s->nx || jj >= s->ny) {
         return;
     }
 
@@ -334,7 +334,7 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     int tja = tj + 1;
     int tia = ti + 1;
 
-    #ifdef __HIPCC_
+    #ifdef __HIPCC__
     const int istride = s->ny;
     const int jstride = 1;
     #else 
