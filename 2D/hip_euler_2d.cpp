@@ -285,9 +285,9 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
     const int lipface = jj * jstride + (ii + 1 - (ii == ni - 1)) * istride; 
     const int ljpface = (jj + 1 - (jj == nj - 1)) * jstride + ii * istride;
     // (i,j)-1/2 face
-    pxl  = primitive_buff[limface]; 
-    pxr  = primitive_buff[gid];
-    pyl  = primitive_buff[ljmface]; 
+    pxl  = s->prims[limface]; 
+    pxr  = s->prims[gid];
+    pyl  = s->prims[ljmface]; 
     pyr  = pxr;        
 
     uxl  = s->prims2cons(pxl);
@@ -303,10 +303,10 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
     glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);                  
 
     // i+1/2 face
-    pxl  = primitive_buff[gid]; 
-    pxr  = primitive_buff[lipface];
+    pxl  = s->prims[gid]; 
+    pxr  = s->prims[lipface];
     pyl  = pxl; 
-    pyr  = primitive_buff[ljpface];        
+    pyr  = s->prims[ljpface];        
 
     uxl  = s->prims2cons(pxl);
     uxr  = s->prims2cons(pxr);
@@ -319,7 +319,7 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
     gr  = s->prims2flux(pyr, 2);
     frf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
     grf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);                      
-    
+
     s->sys_state[gid] -= (frf - flf) / s->dx * dt + (grf - glf) / s->dy * dt;
 
 }
