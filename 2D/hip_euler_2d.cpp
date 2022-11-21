@@ -94,6 +94,14 @@ SimState::~SimState(){
     free(prims);
 };
 
+GPU_CALLABLE_MEMBER void SimState::cons2prim(const Conserved &u)
+{   
+    const double rho = u.rho;
+    const double v1  = u.m1 / rho;
+    const double v2  = u.m2 / rho;
+    const double p   = (ADIABATIC_GAMMA - 1.0) *  ( u.energy - 0.5 * rho * (v1 * v1 + v2 * v2));
+    return Primitive {rho, v1, v2, p};
+}
 // Convert from the conservarive array to primitive and cache it
 GPU_CALLABLE_MEMBER void SimState::cons2prim(const Conserved *u)
 {   
@@ -110,15 +118,13 @@ GPU_CALLABLE_MEMBER void SimState::cons2prim(const Conserved *u)
             }();
 
             rho = u[gid].rho;
-            v1 = u[gid].m1 / u[gid].rho;
-            v2 = u[gid].m2 / u[gid].rho;
+            v1 = u[gid].m1 / rho;
+            v2 = u[gid].m2 / rho;
             p  = (ADIABATIC_GAMMA - 1.0) *  ( u[gid].energy - 0.5 * rho * (v1 * v1 + v2 * v2));
             prims[gid] = Primitive {rho, v1, v2, p};
 
         }
     }
-    
-    
 }//-----End cons2prims
 
 
@@ -166,35 +172,12 @@ GPU_CALLABLE_MEMBER EigenWave SimState::calc_waves(
     const double pl   = left_prims.p;
     const double rhor = right_prims.rho;
     const double vr   = right_prims.vcomponent(nhat);
-    const double pr   = right_prims.p ;
+    const double pr   = right_prims.p;
     const double csl  = sqrt(ADIABATIC_GAMMA * pl / rhol);
     const double csr  = sqrt(ADIABATIC_GAMMA * pr/  rhor);
     const double aL   = min(vl - csl, vr - csr);
     const double aR   = max(vr + csr, vl + csl);
     return EigenWave{aL, aR};
-    // switch (nhat)
-    // {
-    // case 1:
-    //     {
-    //         const double vr  = right_prims.v1;
-    //         const double vl  = left_prims.v1;
-    //         const double aL   = min(vl - csl, vr - csr);
-    //         const double aR   = max(vr + csr, vl + csl);
-
-    //         return EigenWave(aL, aR);
-    //     }
-    
-    // case 2:
-    //     {
-    //         const double vr  = right_prims.v2;
-    //         const double vl  = left_prims.v2;
-    //         const double aL   = min(vl - csl, vr - csr);
-    //         const double aR   = max(vr + csr, vl + csl);
-
-    //         return EigenWave(aL, aR);
-    //     }
-        
-    // }
 }//-------End calc_waves
 
 
@@ -377,7 +360,7 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     const Conserved glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
     
 
-    // // i+1/2 face
+    // (i, j)+1/2 face
     pxl  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
     pxr  = primitive_buff[(tia + 1) * bj + (tja + 0) * bi];
     pyl  = primitive_buff[(tia + 0) * bj + (tja + 0) * bi];
@@ -396,6 +379,7 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     const Conserved grf  = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
 
     s->sys_state[gid] -= ((frf - flf) / s->dx + (grf - glf) / s->dy) * dt;
+    s->prims[gid]      = s->cons2prim(s->sys_state[gid]);
 
 }
 
@@ -472,7 +456,7 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blo
             gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
             #else
             shared_gpu_evolve<<<group_size, block_size, shared_memory, 0>>>(s, dt);
-            gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
+            // gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
             // shared_gpu_cons2prim<<<group_size, block_size, shared_memory, 0>>>(s);
             #endif 
             t += dt;
@@ -495,7 +479,6 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blo
     std::cout << "Average zone_updates/sec for: " 
     << n << " iterations was " 
     << zu_avg / ncheck << " zones/sec" << "\n";
-
 }
 
 SimDualSpace::SimDualSpace(){}
@@ -516,8 +499,6 @@ void SimDualSpace::copyStateToGPU(
 
     //--------Copy the host resources to pointer variables on host
     hipMemcpy(host_u0,    host.sys_state, nx * ny * sizeof(Conserved), hipMemcpyHostToDevice);
-    // hipMemcpy(host_u1,    host.u1       , nz * sizeof(Conserved), hipMemcpyHostToDevice);
-    // hipMemcpy(host_dudt,  host.du_dt    , nz * sizeof(Conserved), hipMemcpyHostToDevice);
     hipMemcpy(host_prims, host.prims    , nx * ny * sizeof(Primitive), hipMemcpyHostToDevice);
 
     // copy pointer to allocated device storage to device class
@@ -525,16 +506,6 @@ void SimDualSpace::copyStateToGPU(
     {
         printf("Hip Memcpy failed at: host_u0 -> device_sys_tate");
     };
-    // if( hipMemcpy(&(device->u1),        &host_u1,    sizeof(Conserved *),  hipMemcpyHostToDevice) != hipSuccess )
-    // {
-    //     printf("Hip Memcpy failed at: host_u1 -> device_u1");
-    // };
-
-    // if( hipMemcpy(&(device->du_dt),     &host_dudt,  sizeof(Conserved *),  hipMemcpyHostToDevice) != hipSuccess )
-    // {
-    //     printf("Hip Memcpy failed at: host_dudt -> device_du_dt");
-    // };
-
     if( hipMemcpy(&(device->prims),     &host_prims, sizeof(Primitive *),  hipMemcpyHostToDevice) != hipSuccess )
     {
         printf("Hip Memcpy failed at: host_prims -> device_prims");
@@ -582,8 +553,6 @@ void SimDualSpace::cleanUp()
 {
     printf("Freeing Device Memory...\n");
     hipFree(host_u0);
-    // hipFree(host_u1);
-    // hipFree(host_dudt);
     hipFree(host_prims);
     printf("Memory Freed.\n");
     
