@@ -10,10 +10,7 @@
 #include "datawrite.hpp"
 #include "hip_euler_2d.hpp"
 
-
 using namespace hip_euler2d;
-
-static constexpr int BLOCK_SIZE = 8;
 
 int main(int argc, char ** argv)
 {
@@ -41,13 +38,13 @@ int main(int argc, char ** argv)
     dualMem.copyStateToGPU(sim_state, d_sim);
 
     // Setup the system
-    int nxBlocks = (nx + BLOCK_SIZE - 1) / BLOCK_SIZE;
-    int nyBlocks = (ny + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    int nxBlocks = (nx + SH_BLOCK_SIZE - 1) / SH_BLOCK_SIZE;
+    int nyBlocks = (ny + SH_BLOCK_SIZE - 1) / SH_BLOCK_SIZE;
     double tend = 0.1;
     double dt = dx * 0.05;
 
     // Evolve it 
-    evolve(d_sim, nxBlocks, nyBlocks, BLOCK_SIZE, nx*ny, tend, dt);
+    evolve(d_sim, nxBlocks, nyBlocks, SH_BLOCK_SIZE, nx*ny, tend, dt);
 
     dualMem.copyGPUStateToHost(d_sim, sim_state);
 
