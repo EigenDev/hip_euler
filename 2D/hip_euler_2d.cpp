@@ -333,8 +333,6 @@ __global__ void hip_euler2d::shared_gpu_evolve(SimState * s, double dt)
     int ti  = threadIdx.y;
     int tja = tj + 1;
     int tia = ti + 1;
-    int ni  = s->get_max_i_stride();
-    int nj  = s->get_max_j_stride();
 
     #ifdef __HIPCC_
     const int istride = s->ny;
@@ -474,6 +472,7 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blo
     dim3 group_size = dim3(nxBlocks, nyBlocks, 1);
     dim3 block_size = dim3(shared_blocks, shared_blocks, 1);
     int shared_memory = (block_size.x + 2) * (block_size.y + 2) * sizeof(Primitive);
+    std::cout << "nzones: " <<  nzones << "\n";
     while (t < tend)
     {
         t1 = high_resolution_clock::now();
