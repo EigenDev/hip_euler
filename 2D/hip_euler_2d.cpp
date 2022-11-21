@@ -481,7 +481,8 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blo
             gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
             #else
             shared_gpu_evolve<<<group_size, block_size, shared_memory, 0>>>(s, dt);
-            shared_gpu_cons2prim<<<group_size, block_size, shared_memory, 0>>>(s);
+            gpu_cons2prim<<<group_size, block_size, 0, 0>>>(s);
+            // shared_gpu_cons2prim<<<group_size, block_size, shared_memory, 0>>>(s);
             #endif 
             t += dt;
             n++;
