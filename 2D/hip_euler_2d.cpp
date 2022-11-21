@@ -285,40 +285,41 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
     const int lipface = jj * jstride + (ii + 1 - (ii == ni - 1)) * istride; 
     const int ljpface = (jj + 1 - (jj == nj - 1)) * jstride + ii * istride;
     // (i,j)-1/2 face
-    uxl  = s->sys_state[limface];
-    uxr  = s->sys_state[gid];
-    uyl  = s->sys_state[ljmface];
-    uyr  = s->sys_state[gid];
-    pxl  = s->prims[limface];
-    pxr  = s->prims[gid];
-    pyl  = s->prims[ljmface];
-    pyr  = s->prims[gid];                    
+    pxl  = primitive_buff[limface]; 
+    pxr  = primitive_buff[gid];
+    pyl  = primitive_buff[ljmface]; 
+    pyr  = pxr;        
 
-    fl  = s->sys_state[limface]; // s->prims2flux(pxl, 1);
-    fr  = s->sys_state[limface]; // s->prims2flux(pxr, 1);
-    gl  = s->sys_state[limface]; // s->prims2flux(pyl, 2);
-    gr  = s->sys_state[limface]; // s->prims2flux(pyr, 2);
-    flf = s->sys_state[limface]; // s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-    glf = s->sys_state[limface]; // s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
-    
+    uxl  = s->prims2cons(pxl);
+    uxr  = s->prims2cons(pxr);
+    uyl  = s->prims2cons(pyl);
+    uyr  = s->prims2cons(pyr);                         
+
+    fl  = s->prims2flux(pxl, 1);
+    fr  = s->prims2flux(pxr, 1);
+    gl  = s->prims2flux(pyl, 2);
+    gr  = s->prims2flux(pyr, 2);
+    flf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+    glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);                  
 
     // i+1/2 face
-    uxl  = s->sys_state[gid];
-    uxr  = s->sys_state[lipface];
-    uyl  = s->sys_state[gid];
-    uyr  = s->sys_state[ljpface];
-    pxl  = s->prims[gid];
-    pxr  = s->prims[lipface];
-    pyl  = s->prims[gid];
-    pyr  = s->prims[ljpface];                       
+    pxl  = primitive_buff[gid]; 
+    pxr  = primitive_buff[lipface];
+    pyl  = pxl; 
+    pyr  = primitive_buff[ljpface];        
 
-    fl  = s->sys_state[limface]; // s->prims2flux(pxl, 1);
-    fr  = s->sys_state[limface]; // s->prims2flux(pxr, 1);
-    gl  = s->sys_state[limface]; // s->prims2flux(pyl, 2);
-    gr  = s->sys_state[limface]; // s->prims2flux(pyr, 2);
-    frf = s->sys_state[limface]; // s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-    grf = s->sys_state[limface]; // s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
+    uxl  = s->prims2cons(pxl);
+    uxr  = s->prims2cons(pxr);
+    uyl  = s->prims2cons(pyl);
+    uyr  = s->prims2cons(pyr);                         
 
+    fl  = s->prims2flux(pxl, 1);
+    fr  = s->prims2flux(pxr, 1);
+    gl  = s->prims2flux(pyl, 2);
+    gr  = s->prims2flux(pyr, 2);
+    frf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+    grf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);                      
+    
     s->sys_state[gid] -= (frf - flf) / s->dx * dt + (grf - glf) / s->dy * dt;
 
 }
