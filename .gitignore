@@ -2,3 +2,4 @@ gpuEuler
 *.o
 .vscode
 *.h5
+*.png
