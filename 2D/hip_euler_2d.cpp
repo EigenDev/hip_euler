@@ -294,12 +294,12 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
     pyl  = s->prims[ljmface];
     pyr  = s->prims[gid];                    
 
-    fl  = s->prims2flux(pxl, 1);
-    fr  = s->prims2flux(pxr, 1);
-    gl  = s->prims2flux(pyl, 2);
-    gr  = s->prims2flux(pyr, 2);
-    flf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-    glf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
+    fl  = s->sys_state[limface]; // s->prims2flux(pxl, 1);
+    fr  = s->sys_state[limface]; // s->prims2flux(pxr, 1);
+    gl  = s->sys_state[limface]; // s->prims2flux(pyl, 2);
+    gr  = s->sys_state[limface]; // s->prims2flux(pyr, 2);
+    flf = s->sys_state[limface]; // s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+    glf = s->sys_state[limface]; // s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2);
     
 
     // i+1/2 face
@@ -312,12 +312,12 @@ __global__ void hip_euler2d::gpu_evolve(SimState * s, double dt)
     pyl  = s->prims[gid];
     pyr  = s->prims[ljpface];                       
 
-    fl  = s->prims2flux(pxl, 1);
-    fr  = s->prims2flux(pxr, 1);
-    gl  = s->prims2flux(pyl, 2);
-    gr  = s->prims2flux(pyr, 2);
-    frf = s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
-    grf = s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
+    fl  = s->sys_state[limface]; // s->prims2flux(pxl, 1);
+    fr  = s->sys_state[limface]; // s->prims2flux(pxr, 1);
+    gl  = s->sys_state[limface]; // s->prims2flux(pyl, 2);
+    gr  = s->sys_state[limface]; // s->prims2flux(pyr, 2);
+    frf = s->sys_state[limface]; // s->calc_hll_flux(uxl, uxr, fl, fr, pxl, pxr, 1);
+    grf = s->sys_state[limface]; // s->calc_hll_flux(uyl, uyr, gl, gr, pyl, pyr, 2); 
 
     s->sys_state[gid] -= (frf - flf) / s->dx * dt + (grf - glf) / s->dy * dt;
 
@@ -483,7 +483,7 @@ void hip_euler2d::evolve(SimState *s, int nxBlocks, int nyBlocks, int shared_blo
     while (t < tend)
     {
         t1 = high_resolution_clock::now();
-        // hipLaunchKernelGGL(gpu_evolve, group_size, block_size, shared_memory, 0, s, dt);
+        hipLaunchKernelGGL(gpu_evolve, group_size, block_size, shared_memory, 0, s, dt);
         hipLaunchKernelGGL(gpu_cons2prim, group_size, block_size, 0, 0, s);
         hipDeviceSynchronize();
         if (n >= nfold){
